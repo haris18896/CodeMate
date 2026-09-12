@@ -13,6 +13,7 @@ import {
   generateCodeSchema,
 } from '../../utils/validation';
 import { toDateOnly, parseDateOnly } from '../../utils/date';
+import { useAppContext } from '../../store/AppContext';
 
 type Props = {
   submitLabel: string;
@@ -21,6 +22,8 @@ type Props = {
 
 export function GenerateCodeForm({ submitLabel, onSubmit }: Props) {
   const { t } = useTranslation();
+  const { language } = useAppContext();
+  const isUrdu = language === 'ur';
   const [busy, setBusy] = useState(false);
   const [pickerField, setPickerField] = useState<
     'createdDate' | 'expiryDate' | null
@@ -57,17 +60,17 @@ export function GenerateCodeForm({ submitLabel, onSubmit }: Props) {
       return;
     }
     setValue(pickerField, toDateOnly(date), { shouldValidate: true });
-    if (Platform.OS === 'ios') {
-      // keep open until user taps elsewhere; close on next field open
-    }
   };
 
   const submit = handleSubmit(async (values: GenerateCodeFormValues) => {
     try {
       setBusy(true);
+      const englishName = isUrdu ? '' : values.englishName?.trim() || '';
+      const urduName = isUrdu ? values.urduName?.trim() || '' : '';
       await onSubmit({
         ...values,
-        urduName: values.urduName?.trim() || '',
+        englishName,
+        urduName,
       });
     } finally {
       setBusy(false);
@@ -76,34 +79,37 @@ export function GenerateCodeForm({ submitLabel, onSubmit }: Props) {
 
   return (
     <View>
-      <Controller
-        control={control}
-        name="englishName"
-        render={({ field: { onChange, value } }) => (
-          <AppInput
-            label={`${t('generate.englishName')} *`}
-            value={value}
-            onChangeText={onChange}
-            placeholder="Sample Product"
-            error={errors.englishName?.message}
-            autoCapitalize="words"
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="urduName"
-        render={({ field: { onChange, value } }) => (
-          <AppInput
-            label={t('generate.urduName')}
-            value={value}
-            onChangeText={onChange}
-            placeholder="نمونہ پروڈکٹ"
-            isRTL
-            error={errors.urduName?.message}
-          />
-        )}
-      />
+      {isUrdu ? (
+        <Controller
+          control={control}
+          name="urduName"
+          render={({ field: { onChange, value } }) => (
+            <AppInput
+              label={`${t('generate.name')} *`}
+              value={value ?? ''}
+              onChangeText={onChange}
+              placeholder="نمونہ پروڈکٹ"
+              isRTL
+              error={errors.urduName?.message}
+            />
+          )}
+        />
+      ) : (
+        <Controller
+          control={control}
+          name="englishName"
+          render={({ field: { onChange, value } }) => (
+            <AppInput
+              label={`${t('generate.name')} *`}
+              value={value ?? ''}
+              onChangeText={onChange}
+              placeholder="Sample Product"
+              error={errors.englishName?.message}
+              autoCapitalize="words"
+            />
+          )}
+        />
+      )}
       <Controller
         control={control}
         name="price"

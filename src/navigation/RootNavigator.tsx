@@ -1,16 +1,21 @@
 import React from 'react';
-import { NavigationContainer, DarkTheme, DefaultTheme } from '@react-navigation/native';
+import {
+  NavigationContainer,
+  DarkTheme,
+  DefaultTheme,
+} from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { RootStackParamList } from './navigationTypes';
 import { SplashScreen } from '../screens/Splash/SplashScreen';
 import { OnboardingScreen } from '../screens/Onboarding/OnboardingScreen';
 import { BottomTabNavigator } from './BottomTabNavigator';
-import { useAppTheme } from '../store/AppContext';
+import { useAppContext, useAppTheme } from '../store/AppContext';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function RootNavigator() {
   const theme = useAppTheme();
+  const { isRTL, language } = useAppContext();
 
   const navTheme = {
     ...(theme.isDark ? DarkTheme : DefaultTheme),
@@ -26,7 +31,10 @@ export function RootNavigator() {
   };
 
   return (
-    <NavigationContainer theme={navTheme}>
+    <NavigationContainer
+      key={language}
+      theme={navTheme}
+      direction={isRTL ? 'rtl' : 'ltr'}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Onboarding" component={OnboardingScreen} />

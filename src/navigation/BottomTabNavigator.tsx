@@ -1,12 +1,12 @@
+/* eslint-disable react/no-unstable-nested-components */
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import MaterialDesignIcons from '@react-native-vector-icons/material-design-icons';
 import { useTranslation } from 'react-i18next';
 import { MainTabParamList } from './navigationTypes';
 import { HomeStackNavigator } from './HomeStackNavigator';
 import { HistoryStackNavigator } from './HistoryStackNavigator';
-import { ScanStackNavigator } from './ScanStackNavigator';
 import { SettingsStackNavigator } from './SettingsStackNavigator';
 import { useAppTheme } from '../store/AppContext';
 
@@ -25,7 +25,7 @@ export function BottomTabNavigator() {
         tabBarStyle: {
           backgroundColor: theme.colors.tabBar,
           borderTopColor: theme.colors.border,
-          height: 64,
+          height: Platform.OS === 'ios' ? 64 : 110,
           paddingBottom: 8,
           paddingTop: 8,
         },
@@ -33,7 +33,8 @@ export function BottomTabNavigator() {
           fontSize: 12,
           fontWeight: '600',
         },
-      }}>
+      }}
+    >
       <Tab.Screen
         name="HomeTab"
         component={HomeStackNavigator}
@@ -58,29 +59,7 @@ export function BottomTabNavigator() {
           ),
         }}
       />
-      <Tab.Screen
-        name="ScanTab"
-        component={ScanStackNavigator}
-        options={{
-          title: t('tabs.scan'),
-          tabBarIcon: ({ focused }) => (
-            <View
-              style={[
-                styles.scanButton,
-                {
-                  backgroundColor: theme.colors.primary,
-                  borderColor: theme.colors.background,
-                },
-              ]}>
-              <MaterialDesignIcons
-                name={focused ? 'qrcode-scan' : 'line-scan'}
-                color="#FFFFFF"
-                size={26}
-              />
-            </View>
-          ),
-        }}
-      />
+
       <Tab.Screen
         name="SettingsTab"
         component={SettingsStackNavigator}
@@ -98,15 +77,3 @@ export function BottomTabNavigator() {
     </Tab.Navigator>
   );
 }
-
-const styles = StyleSheet.create({
-  scanButton: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 24,
-    borderWidth: 4,
-  },
-});

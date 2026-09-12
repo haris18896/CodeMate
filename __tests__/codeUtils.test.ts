@@ -6,7 +6,9 @@ import {
   stringifyQrPayload,
 } from '../src/utils/codePayload';
 import { getCodeStatus, isExpiryValid, toDateOnly } from '../src/utils/date';
+import { groupCodesByDay } from '../src/utils/groupCodesByDay';
 import { generateCodeSchema } from '../src/utils/validation';
+import { CodeRecord } from '../src/types/code';
 
 describe('QR payload', () => {
   it('builds and stringifies structured JSON', () => {
@@ -112,5 +114,49 @@ describe('validation', () => {
       expiryDate: '2026-09-01',
     });
     expect(result.success).toBe(false);
+  });
+
+  it('accepts urdu-only name', () => {
+    const result = generateCodeSchema.safeParse({
+      englishName: '',
+      urduName: 'نمونہ',
+      price: 100,
+      createdDate: '2026-09-12',
+      expiryDate: '2026-12-31',
+    });
+    expect(result.success).toBe(true);
+  });
+});
+
+describe('groupCodesByDay', () => {
+  const base = {
+    type: 'QR' as const,
+    source: 'GENERATED' as const,
+    payload: '{}',
+    updatedAt: '2026-09-12T10:00:00.000Z',
+  };
+
+  it('orders today, yesterday, then older dates', () => {
+    const now = new Date(2026, 8, 12, 15, 0, 0);
+    const items: CodeRecord[] = [
+      { ...base, id: '1', createdAt: '2026-09-12T12:00:00.000Z' },
+      { ...base, id: '2', createdAt: '2026-09-11T12:00:00.000Z' },
+      { ...base, id: '3', createdAt: '2026-09-10T12:00:00.000Z' },
+      { ...base, id: '4', createdAt: '2026-09-12T08:00:00.000Z' },
+    ];
+
+    const groups = groupCodesByDay(
+      items,
+      'en',
+      { today: 'Today', yesterday: 'Yesterday' },
+      now,
+    );
+
+    expect(groups.map(g => g.label)).toEqual([
+      'Today',
+      'Yesterday',
+      expect.stringMatching(/10 Sep/),
+    ]);
+    expect(groups[0].items.map(i => i.id)).toEqual(['1', '4']);
   });
 });

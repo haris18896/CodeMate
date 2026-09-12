@@ -31,14 +31,20 @@ export function SplashScreen({ navigation }: Props) {
   }, [ready, onboardingComplete, navigation]);
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.primaryDark }]}>
+    <View
+      style={[styles.container, { backgroundColor: theme.colors.primaryDark }]}
+    >
       <Image
         source={require('../../assets/images/logo.png')}
         style={styles.logo}
         resizeMode="contain"
       />
-      <Text style={styles.title}>{t('common.appName', { defaultValue: APP_NAME })}</Text>
-      <Text style={styles.tagline}>{t('common.tagline', { defaultValue: APP_TAGLINE })}</Text>
+      <Text style={styles.title}>
+        {t('common.appName', { defaultValue: APP_NAME })}
+      </Text>
+      <Text style={styles.tagline}>
+        {t('common.tagline', { defaultValue: APP_TAGLINE })}
+      </Text>
     </View>
   );
 }

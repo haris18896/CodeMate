@@ -21,7 +21,7 @@ export function buildQrPayload(
     version: QR_PAYLOAD_VERSION,
     id,
     name: {
-      en: input.englishName.trim(),
+      en: input.englishName.trim() || input.urduName?.trim() || '',
       ...(input.urduName?.trim()
         ? { ur: input.urduName.trim() }
         : {}),
@@ -42,10 +42,9 @@ export function buildBarcodePayload(
   input: GenerateCodeInput,
 ): string {
   const shortId = id.replace(/-/g, '').slice(0, 12).toUpperCase();
-  const asciiName = input.englishName
-    .trim()
+  const asciiName = (input.englishName.trim() || input.urduName?.trim() || 'ITEM')
     .replace(/[^\x20-\x7E]/g, '')
-    .slice(0, 40);
+    .slice(0, 40) || 'ITEM';
   const parts = [
     BARCODE_PREFIX,
     `N=${asciiName}`,

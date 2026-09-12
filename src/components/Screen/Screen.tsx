@@ -30,7 +30,8 @@ export function Screen({
     <ScrollView
       contentContainerStyle={[styles.scrollContent, contentStyle]}
       keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={false}>
+      showsVerticalScrollIndicator={false}
+    >
       {children}
     </ScrollView>
   ) : (
@@ -40,11 +41,8 @@ export function Screen({
   return (
     <SafeAreaView
       edges={edges}
-      style={[
-        styles.safe,
-        { backgroundColor: theme.colors.background },
-        style,
-      ]}>
+      style={[styles.safe, { backgroundColor: theme.colors.background }, style]}
+    >
       <StatusBar barStyle={theme.isDark ? 'light-content' : 'dark-content'} />
       {content}
     </SafeAreaView>
@@ -54,6 +52,7 @@ export function Screen({
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
+    paddingTop: 20,
   },
   content: {
     flex: 1,

@@ -2,7 +2,6 @@ import React, { useRef, useState } from 'react';
 import {
   Dimensions,
   FlatList,
-  Image,
   NativeScrollEvent,
   NativeSyntheticEvent,
   StyleSheet,
@@ -70,12 +69,9 @@ export function OnboardingScreen({ navigation }: Props) {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <Image
-        source={require('../../assets/images/logo.png')}
-        style={styles.logo}
-        resizeMode="contain"
-      />
+    <View
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
       <FlatList
         ref={listRef}
         horizontal
@@ -90,10 +86,11 @@ export function OnboardingScreen({ navigation }: Props) {
               style={[
                 styles.iconCircle,
                 { backgroundColor: theme.colors.primaryLight },
-              ]}>
+              ]}
+            >
               <MaterialDesignIcons
                 name={item.icon}
-                size={48}
+                size={68}
                 color={theme.colors.primary}
               />
             </View>
@@ -101,7 +98,8 @@ export function OnboardingScreen({ navigation }: Props) {
               style={[
                 theme.typography.title,
                 { color: theme.colors.textPrimary, marginTop: 24 },
-              ]}>
+              ]}
+            >
               {item.title}
             </Text>
             <Text
@@ -113,7 +111,8 @@ export function OnboardingScreen({ navigation }: Props) {
                   marginTop: 12,
                   paddingHorizontal: 24,
                 },
-              ]}>
+              ]}
+            >
               {item.body}
             </Text>
           </View>
@@ -139,7 +138,11 @@ export function OnboardingScreen({ navigation }: Props) {
 
       <View style={styles.footer}>
         <AppButton
-          label={index === pages.length - 1 ? t('common.getStarted') : t('common.next')}
+          label={
+            index === pages.length - 1
+              ? t('common.getStarted')
+              : t('common.next')
+          }
           onPress={onNext}
           icon="arrow-right"
         />

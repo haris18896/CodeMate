@@ -7,13 +7,13 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { useColorScheme } from 'react-native';
+import { useColorScheme, View } from 'react-native';
 import {
   APP_VERSION,
   DEFAULT_DISPLAY_NAME,
   STORAGE_KEYS,
 } from '../constants';
-import { applyLanguage } from '../localization';
+import { applyLanguage, isRtlLanguage } from '../localization';
 import { createTheme, AppTheme } from '../theme';
 import { AppLanguage, ThemePreference } from '../types/code';
 import { getDatabase } from '../database/database';
@@ -23,6 +23,7 @@ type AppContextValue = {
   onboardingComplete: boolean;
   completeOnboarding: () => Promise<void>;
   language: AppLanguage;
+  isRTL: boolean;
   setLanguage: (language: AppLanguage) => Promise<void>;
   themePreference: ThemePreference;
   setThemePreference: (preference: ThemePreference) => Promise<void>;
@@ -59,10 +60,10 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
           return;
         }
         setOnboardingComplete(onboarding === '1');
-        if (lang === 'en' || lang === 'ur') {
-          setLanguageState(lang);
-          await applyLanguage(lang);
-        }
+        const initialLanguage: AppLanguage =
+          lang === 'en' || lang === 'ur' ? lang : 'en';
+        setLanguageState(initialLanguage);
+        await applyLanguage(initialLanguage);
         if (theme === 'system' || theme === 'light' || theme === 'dark') {
           setThemePreferenceState(theme);
         }
@@ -111,6 +112,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     (themePreference === 'system' && systemScheme === 'dark');
 
   const theme = useMemo(() => createTheme(isDark), [isDark]);
+  const isRTL = isRtlLanguage(language);
 
   const value = useMemo(
     () => ({
@@ -118,6 +120,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       onboardingComplete,
       completeOnboarding,
       language,
+      isRTL,
       setLanguage,
       themePreference,
       setThemePreference,
@@ -132,6 +135,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       onboardingComplete,
       completeOnboarding,
       language,
+      isRTL,
       setLanguage,
       themePreference,
       setThemePreference,
@@ -142,7 +146,13 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     ],
   );
 
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+  return (
+    <AppContext.Provider value={value}>
+      <View style={{ flex: 1, direction: isRTL ? 'rtl' : 'ltr' }} key={language}>
+        {children}
+      </View>
+    </AppContext.Provider>
+  );
 }
 
 export function useAppContext(): AppContextValue {

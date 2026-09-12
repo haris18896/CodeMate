@@ -10,7 +10,7 @@ import MaterialDesignIcons from '@react-native-vector-icons/material-design-icon
 import { useAppTheme } from '../../store/AppContext';
 
 type Props = TextInputProps & {
-  label: string;
+  label?: string;
   error?: string;
   leftIcon?: React.ComponentProps<typeof MaterialDesignIcons>['name'];
   rightIcon?: React.ComponentProps<typeof MaterialDesignIcons>['name'];
@@ -32,18 +32,20 @@ export function AppInput({
 
   return (
     <View style={styles.wrapper}>
-      <Text
-        style={[
-          theme.typography.label,
-          {
-            color: theme.colors.textPrimary,
-            marginBottom: theme.spacing.xs,
-            textAlign: isRTL ? 'right' : 'left',
-            writingDirection: isRTL ? 'rtl' : 'ltr',
-          },
-        ]}>
-        {label}
-      </Text>
+      {label ? (
+        <Text
+          style={[
+            theme.typography.label,
+            {
+              color: theme.colors.textPrimary,
+              marginBottom: theme.spacing.xs,
+              textAlign: isRTL ? 'right' : 'left',
+              writingDirection: isRTL ? 'rtl' : 'ltr',
+            },
+          ]}>
+          {label}
+        </Text>
+      ) : null}
       <View
         style={[
           styles.field,

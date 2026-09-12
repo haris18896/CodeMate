@@ -5,7 +5,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import MaterialDesignIcons from '@react-native-vector-icons/material-design-icons';
 import { useTranslation } from 'react-i18next';
 import { AppCard } from '../../components/AppCard/AppCard';
-import { CodeListItem } from '../../components/CodeListItem/CodeListItem';
+import { CodeGroupedList } from '../../components/CodeGroupedList/CodeGroupedList';
 import { EmptyState } from '../../components/EmptyState/EmptyState';
 import { Screen } from '../../components/Screen/Screen';
 import { RECENT_CODES_LIMIT } from '../../constants';
@@ -45,33 +45,19 @@ export function HomeScreen({ navigation }: Props) {
             style={[
               theme.typography.title,
               { color: theme.colors.textPrimary },
-            ]}>
+            ]}
+          >
             {t('home.greeting', { name: displayName })} 👋
           </Text>
           <Text
             style={[
               theme.typography.body,
               { color: theme.colors.textSecondary, marginTop: 4 },
-            ]}>
+            ]}
+          >
             {t('home.subtitle')}
           </Text>
         </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('tabs.settings')}
-          onPress={() =>
-            navigation.getParent()?.navigate('SettingsTab' as never)
-          }
-          style={[
-            styles.settingsBtn,
-            { backgroundColor: theme.colors.surfaceMuted },
-          ]}>
-          <MaterialDesignIcons
-            name="cog-outline"
-            size={22}
-            color={theme.colors.textPrimary}
-          />
-        </Pressable>
       </View>
 
       <View style={styles.actionsRow}>
@@ -84,6 +70,7 @@ export function HomeScreen({ navigation }: Props) {
         <ActionTile
           title={t('home.generateBarcode')}
           icon="barcode"
+          dark
           onPress={() => navigation.navigate('GenerateBarcode')}
         />
       </View>
@@ -99,12 +86,14 @@ export function HomeScreen({ navigation }: Props) {
             borderColor: theme.colors.border,
             opacity: pressed ? 0.92 : 1,
           },
-        ]}>
+        ]}
+      >
         <View
           style={[
             styles.scanIcon,
             { backgroundColor: theme.colors.primaryLight },
-          ]}>
+          ]}
+        >
           <MaterialDesignIcons
             name="line-scan"
             size={28}
@@ -116,14 +105,16 @@ export function HomeScreen({ navigation }: Props) {
             style={[
               theme.typography.subtitle,
               { color: theme.colors.textPrimary },
-            ]}>
+            ]}
+          >
             {t('home.scanCode')}
           </Text>
           <Text
             style={[
               theme.typography.caption,
               { color: theme.colors.textSecondary, marginTop: 4 },
-            ]}>
+            ]}
+          >
             {t('home.scanDescription')}
           </Text>
         </View>
@@ -134,12 +125,18 @@ export function HomeScreen({ navigation }: Props) {
           style={[
             theme.typography.subtitle,
             { color: theme.colors.textPrimary },
-          ]}>
+          ]}
+        >
           {t('home.recentCodes')}
         </Text>
         <Pressable
-          onPress={() => navigation.getParent()?.navigate('HistoryTab' as never)}>
-          <Text style={[theme.typography.label, { color: theme.colors.primary }]}>
+          onPress={() =>
+            navigation.getParent()?.navigate('HistoryTab' as never)
+          }
+        >
+          <Text
+            style={[theme.typography.label, { color: theme.colors.primary }]}
+          >
             {t('common.seeAll')}
           </Text>
         </Pressable>
@@ -154,15 +151,12 @@ export function HomeScreen({ navigation }: Props) {
           />
         </AppCard>
       ) : (
-        recent.map(item => (
-          <CodeListItem
-            key={item.id}
-            item={item}
-            onPress={() =>
-              navigation.navigate('CodeDetails', { codeId: item.id })
-            }
-          />
-        ))
+        <CodeGroupedList
+          items={recent}
+          onPressItem={item =>
+            navigation.navigate('CodeDetails', { codeId: item.id })
+          }
+        />
       )}
     </Screen>
   );
@@ -188,13 +182,16 @@ function ActionTile({
         styles.tile,
         theme.shadows.card,
         {
-          backgroundColor: dark ? theme.colors.primary : theme.colors.primaryLight,
+          backgroundColor: dark
+            ? theme.colors.primary
+            : theme.colors.primaryLight,
           opacity: pressed ? 0.9 : 1,
         },
-      ]}>
+      ]}
+    >
       <MaterialDesignIcons
         name={icon}
-        size={34}
+        size={80}
         color={dark ? theme.colors.textInverse : theme.colors.primaryDark}
       />
       <Text
@@ -204,7 +201,8 @@ function ActionTile({
             color: dark ? theme.colors.textInverse : theme.colors.primaryDark,
             marginTop: 14,
           },
-        ]}>
+        ]}
+      >
         {title}
       </Text>
     </Pressable>
@@ -232,9 +230,10 @@ const styles = StyleSheet.create({
   },
   tile: {
     flex: 1,
-    minHeight: 140,
+    minHeight: 120,
     borderRadius: 16,
     padding: 16,
+    alignItems: 'center',
     justifyContent: 'space-between',
   },
   scanCard: {

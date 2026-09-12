@@ -1,23 +1,21 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 import { ScanStackParamList } from './navigationTypes';
 import { ScannerScreen } from '../screens/Scanner/ScannerScreen';
 import { ScanResultScreen } from '../screens/ScanResult/ScanResultScreen';
 import { CodeDetailsScreen } from '../screens/CodeDetails/CodeDetailsScreen';
 import { useAppTheme } from '../store/AppContext';
+import { createStackScreenOptions } from './stackOptions';
 
 const Stack = createNativeStackNavigator<ScanStackParamList>();
 
 export function ScanStackNavigator() {
   const theme = useAppTheme();
+  const { t } = useTranslation();
+
   return (
-    <Stack.Navigator
-      screenOptions={{
-        headerTintColor: theme.colors.primary,
-        headerStyle: { backgroundColor: theme.colors.background },
-        headerShadowVisible: false,
-        contentStyle: { backgroundColor: theme.colors.background },
-      }}>
+    <Stack.Navigator screenOptions={createStackScreenOptions(theme)}>
       <Stack.Screen
         name="ScannerMain"
         component={ScannerScreen}
@@ -26,12 +24,12 @@ export function ScanStackNavigator() {
       <Stack.Screen
         name="ScanResult"
         component={ScanResultScreen}
-        options={{ title: 'Scan Result' }}
+        options={{ title: t('nav.scanResult') }}
       />
       <Stack.Screen
         name="CodeDetails"
         component={CodeDetailsScreen as React.ComponentType}
-        options={{ title: 'Details' }}
+        options={{ title: t('nav.details') }}
       />
     </Stack.Navigator>
   );

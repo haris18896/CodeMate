@@ -1,5 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 import { HomeStackParamList } from './navigationTypes';
 import { HomeScreen } from '../screens/Home/HomeScreen';
 import { GenerateQRScreen } from '../screens/GenerateQR/GenerateQRScreen';
@@ -8,19 +9,16 @@ import { QRPreviewScreen } from '../screens/QRPreview/QRPreviewScreen';
 import { BarcodePreviewScreen } from '../screens/BarcodePreview/BarcodePreviewScreen';
 import { CodeDetailsScreen } from '../screens/CodeDetails/CodeDetailsScreen';
 import { useAppTheme } from '../store/AppContext';
+import { createStackScreenOptions } from './stackOptions';
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
 
 export function HomeStackNavigator() {
   const theme = useAppTheme();
+  const { t } = useTranslation();
+
   return (
-    <Stack.Navigator
-      screenOptions={{
-        headerTintColor: theme.colors.primary,
-        headerStyle: { backgroundColor: theme.colors.background },
-        headerShadowVisible: false,
-        contentStyle: { backgroundColor: theme.colors.background },
-      }}>
+    <Stack.Navigator screenOptions={createStackScreenOptions(theme)}>
       <Stack.Screen
         name="HomeMain"
         component={HomeScreen}
@@ -29,27 +27,27 @@ export function HomeStackNavigator() {
       <Stack.Screen
         name="GenerateQR"
         component={GenerateQRScreen}
-        options={{ title: 'Generate QR' }}
+        options={{ title: t('nav.generateQr') }}
       />
       <Stack.Screen
         name="GenerateBarcode"
         component={GenerateBarcodeScreen}
-        options={{ title: 'Generate Barcode' }}
+        options={{ title: t('nav.generateBarcode') }}
       />
       <Stack.Screen
         name="QRPreview"
         component={QRPreviewScreen}
-        options={{ title: 'QR Preview' }}
+        options={{ title: t('nav.qrPreview') }}
       />
       <Stack.Screen
         name="BarcodePreview"
         component={BarcodePreviewScreen}
-        options={{ title: 'Barcode Preview' }}
+        options={{ title: t('nav.barcodePreview') }}
       />
       <Stack.Screen
         name="CodeDetails"
         component={CodeDetailsScreen}
-        options={{ title: 'Details' }}
+        options={{ title: t('nav.details') }}
       />
     </Stack.Navigator>
   );

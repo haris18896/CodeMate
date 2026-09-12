@@ -7,12 +7,13 @@ export const generateCodeSchema = z
     englishName: z
       .string()
       .trim()
-      .min(1, 'English name is required')
-      .max(MAX_NAME_LENGTH, 'Name is too long'),
+      .max(MAX_NAME_LENGTH, 'Name is too long')
+      .optional()
+      .or(z.literal('')),
     urduName: z
       .string()
       .trim()
-      .max(MAX_NAME_LENGTH, 'Urdu name is too long')
+      .max(MAX_NAME_LENGTH, 'Name is too long')
       .optional()
       .or(z.literal('')),
     price: z.preprocess(
@@ -34,6 +35,20 @@ export const generateCodeSchema = z
       .regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid expiry date'),
   })
   .superRefine((data, ctx) => {
+    const hasEnglish = Boolean(data.englishName?.trim());
+    const hasUrdu = Boolean(data.urduName?.trim());
+    if (!hasEnglish && !hasUrdu) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['englishName'],
+        message: 'Name is required',
+      });
+      ctx.addIssue({
+        code: 'custom',
+        path: ['urduName'],
+        message: 'Name is required',
+      });
+    }
     if (!isExpiryValid(data.createdDate, data.expiryDate)) {
       ctx.addIssue({
         code: 'custom',
