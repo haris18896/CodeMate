@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { MainTabParamList } from './navigationTypes';
 import { HomeStackNavigator } from './HomeStackNavigator';
 import { HistoryStackNavigator } from './HistoryStackNavigator';
+import { ScanStackNavigator } from './ScanStackNavigator';
 import { SettingsStackNavigator } from './SettingsStackNavigator';
 import { useAppTheme } from '../store/AppContext';
 
@@ -25,8 +26,8 @@ export function BottomTabNavigator() {
         tabBarStyle: {
           backgroundColor: theme.colors.tabBar,
           borderTopColor: theme.colors.border,
-          height: Platform.OS === 'ios' ? 64 : 110,
-          paddingBottom: 8,
+          height: Platform.OS === 'ios' ? 88 : 100,
+          paddingBottom: Platform.OS === 'ios' ? 24 : 8,
           paddingTop: 8,
         },
         tabBarLabelStyle: {
@@ -59,7 +60,20 @@ export function BottomTabNavigator() {
           ),
         }}
       />
-
+      <Tab.Screen
+        name="ScanTab"
+        component={ScanStackNavigator}
+        options={{
+          title: t('tabs.scan'),
+          tabBarIcon: ({ color, size, focused }) => (
+            <MaterialDesignIcons
+              name={focused ? 'qrcode-scan' : 'line-scan'}
+              color={color}
+              size={size}
+            />
+          ),
+        }}
+      />
       <Tab.Screen
         name="SettingsTab"
         component={SettingsStackNavigator}

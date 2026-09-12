@@ -63,7 +63,7 @@ export function CodeDetailsScreen({ navigation, route }: Props) {
   };
 
   return (
-    <Screen scroll>
+    <Screen scroll edges={['left', 'right', 'bottom']}>
       <View style={styles.header}>
         <Text
           style={[theme.typography.title, { color: theme.colors.textPrimary }]}>
@@ -177,11 +177,7 @@ export function CodeDetailsScreen({ navigation, route }: Props) {
       </View>
 
       <View style={styles.offscreen} pointerEvents="none">
-        <ExportableCodeCard
-          ref={exportRef}
-          record={record}
-          locale={i18n.language}
-        />
+        <ExportableCodeCard ref={exportRef} record={record} />
       </View>
       <LoadingOverlay visible={busy} />
     </Screen>

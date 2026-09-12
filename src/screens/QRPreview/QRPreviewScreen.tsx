@@ -31,7 +31,7 @@ export function QRPreviewScreen({ route }: Props) {
   }
 
   return (
-    <Screen scroll>
+    <Screen scroll edges={['left', 'right', 'bottom']}>
       <CodePreviewActions record={record} title={t('preview.qrTitle')} />
     </Screen>
   );

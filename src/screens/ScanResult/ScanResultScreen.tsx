@@ -1,14 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import {
-  Alert,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import MaterialDesignIcons from '@react-native-vector-icons/material-design-icons';
 import { useTranslation } from 'react-i18next';
 import { AppButton } from '../../components/AppButton/AppButton';
-import { AppCard } from '../../components/AppCard/AppCard';
 import { BarcodeCard } from '../../components/BarcodeCard/BarcodeCard';
 import { QRCodeCard } from '../../components/QRCodeCard/QRCodeCard';
 import { Screen } from '../../components/Screen/Screen';
@@ -33,37 +28,166 @@ export function ScanResultScreen({ navigation, route }: Props) {
     void codeService.getCodeById(route.params.codeId).then(setRecord);
   }, [route.params.codeId]);
 
-  if (!record) {
+  const parsed = useMemo(
+    () =>
+      record
+        ? parseScannedValue(record.rawScannedValue || record.payload)
+        : null,
+    [record],
+  );
+
+  if (!record || !parsed) {
     return <Screen />;
   }
 
-  const parsed = parseScannedValue(record.rawScannedValue || record.payload);
   const isStructured =
     parsed.kind === 'codemate-qr' || parsed.kind === 'codemate-barcode';
+  const title =
+    record.englishName ||
+    record.urduName ||
+    (record.type === 'QR' ? t('common.qr') : t('common.barcode'));
+  const rawValue = record.rawScannedValue || record.payload;
 
   return (
-    <Screen scroll>
-      <Text
+    <Screen scroll edges={['left', 'right', 'bottom']}>
+      <View
         style={[
-          theme.typography.title,
-          { color: theme.colors.textPrimary, marginBottom: 12 },
+          styles.hero,
+          {
+            backgroundColor: theme.colors.primaryLight,
+            borderColor: theme.colors.border,
+          },
         ]}>
-        {t('scanResult.title')}
-      </Text>
-
-      <AppCard>
-        {record.type === 'QR' ? (
-          <QRCodeCard value={record.payload} size={180} />
-        ) : (
-          <BarcodeCard value={record.payload} />
-        )}
-      </AppCard>
-
-      <AppCard style={{ marginTop: 14 }}>
+        <View
+          style={[
+            styles.heroIcon,
+            { backgroundColor: theme.colors.primary },
+          ]}>
+          <MaterialDesignIcons
+            name="check-bold"
+            size={28}
+            color={theme.colors.textInverse}
+          />
+        </View>
         <Text
           style={[
             theme.typography.subtitle,
-            { color: theme.colors.textPrimary, marginBottom: 10 },
+            { color: theme.colors.primaryDark, marginTop: 12 },
+          ]}>
+          {t('scanner.success')}
+        </Text>
+        <Text
+          style={[
+            theme.typography.caption,
+            {
+              color: theme.colors.textSecondary,
+              textAlign: 'center',
+              marginTop: 4,
+              paddingHorizontal: 12,
+            },
+          ]}>
+          {t('scanResult.savedHint')}
+        </Text>
+      </View>
+
+      <View
+        style={[
+          styles.previewCard,
+          theme.shadows.card,
+          {
+            backgroundColor: theme.colors.surface,
+            borderColor: theme.colors.border,
+            borderRadius: theme.radius.lg,
+          },
+        ]}>
+        <View style={styles.previewMeta}>
+          <View
+            style={[
+              styles.typeChip,
+              { backgroundColor: theme.colors.primaryLight },
+            ]}>
+            <MaterialDesignIcons
+              name={record.type === 'QR' ? 'qrcode' : 'barcode'}
+              size={16}
+              color={theme.colors.primaryDark}
+            />
+            <Text
+              style={[
+                theme.typography.caption,
+                { color: theme.colors.primaryDark, fontWeight: '700' },
+              ]}>
+              {record.type === 'QR' ? t('common.qr') : t('common.barcode')}
+            </Text>
+          </View>
+          <View
+            style={[
+              styles.sourceChip,
+              { backgroundColor: theme.colors.surfaceMuted },
+            ]}>
+            <Text
+              style={[
+                theme.typography.caption,
+                { color: theme.colors.textSecondary, fontWeight: '600' },
+              ]}>
+              {t('common.scanned')}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.codeWrap}>
+          {record.type === 'QR' ? (
+            <QRCodeCard value={record.payload} size={200} />
+          ) : (
+            <BarcodeCard value={record.payload} />
+          )}
+        </View>
+
+        <Text
+          numberOfLines={2}
+          style={[
+            theme.typography.subtitle,
+            {
+              color: theme.colors.textPrimary,
+              textAlign: 'center',
+              marginTop: 4,
+            },
+          ]}>
+          {title}
+        </Text>
+        {isStructured && record.price != null ? (
+          <Text
+            style={[
+              theme.typography.bodyBold,
+              {
+                color: theme.colors.primary,
+                textAlign: 'center',
+                marginTop: 4,
+              },
+            ]}>
+            {formatPrice(record.price, record.currency, i18n.language)}
+          </Text>
+        ) : null}
+      </View>
+
+      <View
+        style={[
+          styles.infoCard,
+          theme.shadows.soft,
+          {
+            backgroundColor: theme.colors.surface,
+            borderColor: theme.colors.border,
+            borderRadius: theme.radius.lg,
+          },
+        ]}>
+        <Text
+          style={[
+            theme.typography.label,
+            {
+              color: theme.colors.textSecondary,
+              letterSpacing: 0.6,
+              textTransform: 'uppercase',
+              marginBottom: 4,
+            },
           ]}>
           {isStructured
             ? t('scanResult.productInformation')
@@ -72,73 +196,81 @@ export function ScanResultScreen({ navigation, route }: Props) {
 
         {isStructured ? (
           <>
-            <Row
+            <InfoRow
+              icon="tag-outline"
               label={t('preview.name')}
               value={record.englishName || '—'}
             />
             {record.urduName ? (
-              <Row label={t('preview.urduName')} value={record.urduName} rtl />
+              <InfoRow
+                icon="translate"
+                label={t('preview.name')}
+                value={record.urduName}
+                rtl
+              />
             ) : null}
-            <Row
+            <InfoRow
+              icon="currency-usd"
               label={t('preview.price')}
               value={formatPrice(record.price, record.currency, i18n.language)}
             />
-            <Row
+            <InfoRow
+              icon="calendar-plus"
               label={t('preview.created')}
               value={formatDisplayDate(record.createdDate, i18n.language)}
             />
-            <Row
+            <InfoRow
+              icon="calendar-end"
               label={t('preview.expiry')}
               value={formatDisplayDate(record.expiryDate, i18n.language)}
+              last
             />
-            <StatusBadge status={getCodeStatus(record.expiryDate)} />
+            <View style={styles.statusWrap}>
+              <StatusBadge status={getCodeStatus(record.expiryDate)} />
+            </View>
           </>
         ) : (
           <>
-            <Row
+            <InfoRow
+              icon="shape-outline"
               label={t('scanResult.type')}
               value={record.type === 'QR' ? t('common.qr') : t('common.barcode')}
             />
-            <Row
+            <InfoRow
+              icon="text-box-outline"
               label={t('scanResult.rawValue')}
-              value={record.rawScannedValue || record.payload}
+              value={rawValue}
+              last
             />
           </>
         )}
-      </AppCard>
+      </View>
 
       <View style={styles.actions}>
-        {!isStructured ? (
+        <View style={styles.actionRow}>
+          {!isStructured ? (
+            <AppButton
+              label={t('common.copy')}
+              icon="content-copy"
+              variant="secondary"
+              style={styles.halfBtn}
+              onPress={() => {
+                void shareService
+                  .shareText(rawValue)
+                  .then(() =>
+                    Alert.alert(t('common.success'), t('scanResult.copied')),
+                  );
+              }}
+            />
+          ) : null}
           <AppButton
-            label={t('common.copy')}
-            icon="content-copy"
-            variant="secondary"
-            onPress={() => {
-              void shareService
-                .shareText(record.rawScannedValue || record.payload)
-                .then(() =>
-                  Alert.alert(t('common.success'), t('scanResult.copied')),
-                );
-            }}
+            label={t('common.share')}
+            icon="share-variant-outline"
+            variant={isStructured ? 'primary' : 'secondary'}
+            style={isStructured ? undefined : styles.halfBtn}
+            onPress={() => void shareService.shareText(rawValue)}
           />
-        ) : null}
-        <AppButton
-          label={t('common.share')}
-          icon="share-variant-outline"
-          onPress={() =>
-            void shareService.shareText(
-              record.rawScannedValue || record.payload,
-            )
-          }
-        />
-        <AppButton
-          label={t('common.save')}
-          icon="content-save-outline"
-          variant="ghost"
-          onPress={() =>
-            Alert.alert(t('common.success'), t('preview.savedGallery'))
-          }
-        />
+        </View>
         <AppButton
           label={t('common.scanAgain')}
           icon="line-scan"
@@ -146,64 +278,152 @@ export function ScanResultScreen({ navigation, route }: Props) {
           onPress={() => navigation.navigate('ScannerMain')}
         />
       </View>
-
-      <View
-        style={[
-          styles.toast,
-          { backgroundColor: theme.colors.success },
-        ]}>
-        <Text style={{ color: '#FFF', fontWeight: '600' }}>
-          {t('scanner.success')}
-        </Text>
-      </View>
     </Screen>
   );
 }
 
-function Row({
+function InfoRow({
+  icon,
   label,
   value,
   rtl,
+  last,
 }: {
+  icon: React.ComponentProps<typeof MaterialDesignIcons>['name'];
   label: string;
   value: string;
   rtl?: boolean;
+  last?: boolean;
 }) {
   const theme = useAppTheme();
   return (
-    <View style={styles.row}>
-      <Text style={[theme.typography.caption, { color: theme.colors.textSecondary }]}>
-        {label}
-      </Text>
-      <Text
+    <View
+      style={[
+        styles.infoRow,
+        !last && {
+          borderBottomWidth: StyleSheet.hairlineWidth,
+          borderBottomColor: theme.colors.border,
+        },
+      ]}>
+      <View
         style={[
-          theme.typography.bodyBold,
-          {
-            color: theme.colors.textPrimary,
-            flex: 1,
-            textAlign: rtl ? 'right' : 'left',
-            writingDirection: rtl ? 'rtl' : 'ltr',
-          },
+          styles.infoIcon,
+          { backgroundColor: theme.colors.surfaceMuted },
         ]}>
-        {value}
-      </Text>
+        <MaterialDesignIcons
+          name={icon}
+          size={18}
+          color={theme.colors.primary}
+        />
+      </View>
+      <View style={styles.infoText}>
+        <Text
+          style={[
+            theme.typography.caption,
+            { color: theme.colors.textSecondary },
+          ]}>
+          {label}
+        </Text>
+        <Text
+          style={[
+            theme.typography.bodyBold,
+            {
+              color: theme.colors.textPrimary,
+              marginTop: 2,
+              textAlign: rtl ? 'right' : 'left',
+              writingDirection: rtl ? 'rtl' : 'ltr',
+            },
+          ]}>
+          {value}
+        </Text>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  hero: {
+    alignItems: 'center',
+    borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingVertical: 22,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  heroIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  previewCard: {
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: 16,
+    marginBottom: 14,
+  },
+  previewMeta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  typeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  sourceChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  codeWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+  },
+  infoCard: {
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 14,
+    paddingTop: 14,
+    paddingBottom: 8,
+    marginBottom: 8,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    paddingVertical: 12,
+  },
+  infoIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  infoText: {
+    flex: 1,
+  },
+  statusWrap: {
+    paddingBottom: 10,
+    paddingTop: 2,
+  },
   actions: {
-    marginTop: 16,
+    marginTop: 10,
+    gap: 10,
+    paddingBottom: 8,
+  },
+  actionRow: {
+    flexDirection: 'row',
     gap: 10,
   },
-  row: {
-    marginBottom: 10,
-    gap: 4,
-  },
-  toast: {
-    marginTop: 20,
-    borderRadius: 12,
-    padding: 14,
-    alignItems: 'center',
+  halfBtn: {
+    flex: 1,
   },
 });

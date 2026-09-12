@@ -91,12 +91,19 @@ export const en = {
   },
   scanner: {
     title: 'Scan Code',
-    align: 'Align the QR code or barcode within the frame',
+    subtitle: 'QR codes & barcodes',
+    align: 'Align the code inside the frame',
+    hintDetail: 'Hold steady — scanning happens automatically',
+    notDetected: 'QR code or barcode not detected',
+    detected: 'Code detected',
+    viewDetails: 'View details',
     permissionTitle: 'Camera Permission Required',
     permissionBody:
       'CodeMate needs access to your camera to scan QR codes and barcodes.',
     unavailable: 'Unable to access camera.',
     success: 'Code scanned successfully!',
+    flashOn: 'Flash on',
+    flashOff: 'Flash off',
   },
   scanResult: {
     title: 'Scan Result',
@@ -105,6 +112,7 @@ export const en = {
     type: 'Type',
     rawValue: 'Raw Value',
     copied: 'Value copied.',
+    savedHint: 'This code has been saved to your history.',
   },
   history: {
     title: 'History',

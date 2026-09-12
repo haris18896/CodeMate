@@ -14,7 +14,7 @@ export function GenerateBarcodeScreen({ navigation }: Props) {
   const { t } = useTranslation();
 
   return (
-    <Screen scroll>
+    <Screen scroll edges={['left', 'right', 'bottom']}>
       <GenerateCodeForm
         submitLabel={t('generate.generateBarcodeCta')}
         onSubmit={async values => {

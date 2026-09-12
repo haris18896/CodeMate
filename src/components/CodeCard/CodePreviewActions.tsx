@@ -102,7 +102,7 @@ export function CodePreviewActions({ record, title }: Props) {
 
       <View style={styles.actions}>
         <AppButton
-          label={t('common.download')}
+          label={t('common.saveToGallery')}
           icon="download-outline"
           onPress={onSave}
           style={styles.half}
@@ -115,20 +115,9 @@ export function CodePreviewActions({ record, title }: Props) {
           style={styles.half}
         />
       </View>
-      <AppButton
-        label={t('common.saveToGallery')}
-        icon="image-outline"
-        variant="ghost"
-        onPress={onSave}
-        style={{ marginTop: 10 }}
-      />
 
       <View style={styles.offscreen} pointerEvents="none">
-        <ExportableCodeCard
-          ref={exportRef}
-          record={record}
-          locale={i18n.language}
-        />
+        <ExportableCodeCard ref={exportRef} record={record} />
       </View>
       <LoadingOverlay visible={busy} />
     </View>

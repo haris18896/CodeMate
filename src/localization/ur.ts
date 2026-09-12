@@ -91,12 +91,19 @@ export const ur = {
   },
   scanner: {
     title: 'کوڈ اسکین کریں',
-    align: 'کیو آر یا بارکوڈ کو فریم کے اندر رکھیں',
+    subtitle: 'کیو آر اور بارکوڈ',
+    align: 'کوڈ کو فریم کے اندر رکھیں',
+    hintDetail: 'Steady رکھیں — اسکین خود بخود ہوگا',
+    notDetected: 'کیو آر یا بارکوڈ نہیں ملا',
+    detected: 'کوڈ مل گیا',
+    viewDetails: 'تفصیلات دیکھیں',
     permissionTitle: 'کیمرہ اجازت درکار ہے',
     permissionBody:
       'کوڈ میٹ کو کیو آر اور بارکوڈ اسکین کرنے کے لیے کیمرہ چاہیے۔',
     unavailable: 'کیمرہ دستیاب نہیں۔',
     success: 'کوڈ کامیابی سے اسکین ہو گیا!',
+    flashOn: 'فلیش آن',
+    flashOff: 'فلیش آف',
   },
   scanResult: {
     title: 'اسکین نتیجہ',
@@ -105,6 +112,7 @@ export const ur = {
     type: 'قسم',
     rawValue: 'اصل ویلیو',
     copied: 'ویلیو کاپی ہو گئی۔',
+    savedHint: 'یہ کوڈ آپ کی ہسٹری میں محفوظ ہو گیا ہے۔',
   },
   history: {
     title: 'ہسٹری',
