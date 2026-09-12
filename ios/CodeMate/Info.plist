@@ -28,14 +28,19 @@
 	<true/>
 	<key>NSAppTransportSecurity</key>
 	<dict>
-	  <!-- Do not change NSAllowsArbitraryLoads to true, or you will risk app rejection! -->
 		<key>NSAllowsArbitraryLoads</key>
 		<false/>
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
+	<key>NSCameraUsageDescription</key>
+	<string>CodeMate uses your camera to scan QR codes and barcodes.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>CodeMate saves generated QR codes and barcodes to your photo library.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>CodeMate needs photo library access to save generated codes.</string>
+	<key>RCTNewArchEnabled</key>
+	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>
