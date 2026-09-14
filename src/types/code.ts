@@ -4,6 +4,27 @@ export type CodeStatus = 'ACTIVE' | 'EXPIRES_TODAY' | 'EXPIRED';
 export type ThemePreference = 'system' | 'light' | 'dark';
 export type AppLanguage = 'en' | 'ur';
 
+export type FormFieldType = 'text' | 'date' | 'number';
+
+export type CustomFieldValues = Record<string, string>;
+
+export interface FormTemplateField {
+  id: string;
+  key: string;
+  label: string;
+  type: FormFieldType;
+  required: boolean;
+}
+
+export interface FormTemplate {
+  id: string;
+  name: string;
+  fields: FormTemplateField[];
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CodeRecord {
   id: string;
   type: CodeType;
@@ -17,6 +38,8 @@ export interface CodeRecord {
   payload: string;
   rawScannedValue?: string;
   imagePath?: string;
+  /** Custom template field values keyed by field.key */
+  fields?: CustomFieldValues;
   createdAt: string;
   updatedAt: string;
 }
@@ -29,10 +52,12 @@ export interface CodeMateQrPayload {
     en: string;
     ur?: string;
   };
-  price: number;
-  currency: string;
-  createdDate: string;
   expiryDate: string;
+  fields?: CustomFieldValues;
+  /** Legacy fields kept optional for older scanned codes. */
+  price?: number;
+  currency?: string;
+  createdDate?: string;
 }
 
 export interface CodeMateBarcodeFields {
@@ -46,10 +71,8 @@ export interface CodeMateBarcodeFields {
 export interface GenerateCodeInput {
   englishName: string;
   urduName?: string;
-  price: number;
-  currency?: string;
-  createdDate: string;
   expiryDate: string;
+  fields?: CustomFieldValues;
 }
 
 export type ScanParseResult =

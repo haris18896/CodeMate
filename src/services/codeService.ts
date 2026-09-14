@@ -1,5 +1,6 @@
 import { DEFAULT_CURRENCY } from '../constants';
 import * as codeRepository from '../database/repositories/codeRepository';
+import * as formTemplateRepository from '../database/repositories/formTemplateRepository';
 import { CodeRecord, CodeType, GenerateCodeInput } from '../types/code';
 import {
   buildBarcodePayload,
@@ -22,10 +23,8 @@ export async function generateQrCode(
     source: 'GENERATED',
     englishName: input.englishName.trim() || undefined,
     urduName: input.urduName?.trim() || undefined,
-    price: input.price,
-    currency: input.currency ?? DEFAULT_CURRENCY,
-    createdDate: input.createdDate,
     expiryDate: input.expiryDate,
+    fields: input.fields,
     payload,
   });
 }
@@ -42,10 +41,8 @@ export async function generateBarcode(
     source: 'GENERATED',
     englishName: input.englishName.trim() || undefined,
     urduName: input.urduName?.trim() || undefined,
-    price: input.price,
-    currency: input.currency ?? DEFAULT_CURRENCY,
-    createdDate: input.createdDate,
     expiryDate: input.expiryDate,
+    fields: input.fields,
     payload,
   });
 }
@@ -76,6 +73,7 @@ export async function saveScannedValue(params: {
       currency: parsed.payload.currency,
       createdDate: parsed.payload.createdDate,
       expiryDate: parsed.payload.expiryDate,
+      fields: parsed.payload.fields,
       payload: params.rawValue,
       rawScannedValue: params.rawValue,
     });
@@ -95,6 +93,7 @@ export async function saveScannedValue(params: {
       currency: localMatch?.currency ?? DEFAULT_CURRENCY,
       createdDate: localMatch?.createdDate ?? parsed.fields.createdDate,
       expiryDate: localMatch?.expiryDate ?? parsed.fields.expiryDate,
+      fields: localMatch?.fields,
       payload: params.rawValue,
       rawScannedValue: params.rawValue,
     });
@@ -122,4 +121,15 @@ export const codeService = {
   clearCodes: codeRepository.clearCodes,
   updateCode: codeRepository.updateCode,
   findCodeByBarcodeId: codeRepository.findCodeByBarcodeId,
+};
+
+export const formTemplateService = {
+  listTemplates: formTemplateRepository.listTemplates,
+  getTemplateById: formTemplateRepository.getTemplateById,
+  getDefaultTemplate: formTemplateRepository.getDefaultTemplate,
+  createTemplate: formTemplateRepository.createTemplate,
+  updateTemplate: formTemplateRepository.updateTemplate,
+  deleteTemplate: formTemplateRepository.deleteTemplate,
+  setDefaultTemplate: formTemplateRepository.setDefaultTemplate,
+  slugifyFieldKey: formTemplateRepository.slugifyFieldKey,
 };

@@ -4,7 +4,6 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { GenerateCodeForm } from '../../components/GenerateCodeForm/GenerateCodeForm';
 import { Screen } from '../../components/Screen/Screen';
-import { DEFAULT_CURRENCY } from '../../constants';
 import { HomeStackParamList } from '../../navigation/navigationTypes';
 import { codeService } from '../../services/codeService';
 
@@ -22,10 +21,8 @@ export function GenerateBarcodeScreen({ navigation }: Props) {
             const record = await codeService.generateBarcode({
               englishName: values.englishName ?? '',
               urduName: values.urduName,
-              price: Number(values.price),
-              currency: DEFAULT_CURRENCY,
-              createdDate: values.createdDate,
               expiryDate: values.expiryDate,
+              fields: values.customFields,
             });
             Alert.alert(t('common.success'), t('generate.successBarcode'));
             navigation.replace('BarcodePreview', { codeId: record.id });

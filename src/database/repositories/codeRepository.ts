@@ -1,5 +1,10 @@
 import { DEFAULT_CURRENCY } from '../../constants';
-import { CodeRecord, CodeSource, CodeType } from '../../types/code';
+import {
+  CodeRecord,
+  CodeSource,
+  CodeType,
+  CustomFieldValues,
+} from '../../types/code';
 import { getDatabase } from '../database';
 import { CODES_TABLE } from '../schema';
 
@@ -16,9 +21,22 @@ type CodeRow = {
   payload: string;
   raw_scanned_value: string | null;
   image_path: string | null;
+  fields_json: string | null;
   created_at: string;
   updated_at: string;
 };
+
+function parseFieldsJson(raw: string | null): CustomFieldValues | undefined {
+  if (!raw) {
+    return undefined;
+  }
+  try {
+    const parsed = JSON.parse(raw) as CustomFieldValues;
+    return parsed && typeof parsed === 'object' ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 function mapRow(row: CodeRow): CodeRecord {
   return {
@@ -34,6 +52,7 @@ function mapRow(row: CodeRow): CodeRecord {
     payload: row.payload,
     rawScannedValue: row.raw_scanned_value ?? undefined,
     imagePath: row.image_path ?? undefined,
+    fields: parseFieldsJson(row.fields_json),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -58,8 +77,8 @@ export async function createCode(input: CreateCodeInput): Promise<CodeRecord> {
     `INSERT INTO ${CODES_TABLE} (
       id, type, source, english_name, urdu_name, price, currency,
       created_date, expiry_date, payload, raw_scanned_value, image_path,
-      created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      fields_json, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       record.id,
       record.type,
@@ -73,6 +92,7 @@ export async function createCode(input: CreateCodeInput): Promise<CodeRecord> {
       record.payload,
       record.rawScannedValue ?? null,
       record.imagePath ?? null,
+      record.fields ? JSON.stringify(record.fields) : null,
       record.createdAt,
       record.updatedAt,
     ],
@@ -105,11 +125,7 @@ export async function findCodeByBarcodeId(
        )
      ORDER BY created_at DESC
      LIMIT 1`,
-    [
-      `${barcodeId}%`,
-      `${barcodeId}%`,
-      `%ID=${barcodeId}%`,
-    ],
+    [`${barcodeId}%`, `${barcodeId}%`, `%ID=${barcodeId}%`],
   );
   const row = result.rows?.[0] as CodeRow | undefined;
   return row ? mapRow(row) : null;
@@ -163,10 +179,10 @@ export async function searchCodes(
 
   const db = await getDatabase();
   const clauses = [
-    `(english_name LIKE ? OR urdu_name LIKE ? OR payload LIKE ? OR raw_scanned_value LIKE ?)`,
+    `(english_name LIKE ? OR urdu_name LIKE ? OR payload LIKE ? OR raw_scanned_value LIKE ? OR fields_json LIKE ?)`,
   ];
   const like = `%${trimmed}%`;
-  const params: Array<string> = [like, like, like, like];
+  const params: Array<string> = [like, like, like, like, like];
 
   if (filters?.source && filters.source !== 'ALL') {
     clauses.push('source = ?');
@@ -206,7 +222,7 @@ export async function updateCode(
     `UPDATE ${CODES_TABLE}
      SET type = ?, source = ?, english_name = ?, urdu_name = ?, price = ?,
          currency = ?, created_date = ?, expiry_date = ?, payload = ?,
-         raw_scanned_value = ?, image_path = ?, updated_at = ?
+         raw_scanned_value = ?, image_path = ?, fields_json = ?, updated_at = ?
      WHERE id = ?`,
     [
       updated.type,
@@ -220,6 +236,7 @@ export async function updateCode(
       updated.payload,
       updated.rawScannedValue ?? null,
       updated.imagePath ?? null,
+      updated.fields ? JSON.stringify(updated.fields) : null,
       updated.updatedAt,
       id,
     ],

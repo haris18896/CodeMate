@@ -9,6 +9,13 @@ export function toDateOnly(date: Date = new Date()): string {
   return `${year}-${month}-${day}`;
 }
 
+/** Default expiry: exactly 2 calendar years from today. */
+export function defaultExpiryDate(from: Date = new Date()): string {
+  const date = new Date(from);
+  date.setFullYear(date.getFullYear() + 2);
+  return toDateOnly(date);
+}
+
 export function parseDateOnly(value: string): Date | null {
   if (!DATE_ONLY.test(value)) {
     return null;
@@ -80,4 +87,17 @@ export function isExpiryValid(createdDate: string, expiryDate: string): boolean 
     return false;
   }
   return expiry.getTime() >= created.getTime();
+}
+
+/** Expiry must be today or later. */
+export function isExpiryOnOrAfterToday(
+  expiryDate: string,
+  now: Date = new Date(),
+): boolean {
+  const expiry = parseDateOnly(expiryDate);
+  if (!expiry) {
+    return false;
+  }
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return expiry.getTime() >= today.getTime();
 }

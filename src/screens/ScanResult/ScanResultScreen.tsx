@@ -5,6 +5,8 @@ import MaterialDesignIcons from '@react-native-vector-icons/material-design-icon
 import { useTranslation } from 'react-i18next';
 import { AppButton } from '../../components/AppButton/AppButton';
 import { BarcodeCard } from '../../components/BarcodeCard/BarcodeCard';
+import { CustomFieldsList } from '../../components/CustomFieldsList/CustomFieldsList';
+import { LinkableText } from '../../components/LinkableText/LinkableText';
 import { QRCodeCard } from '../../components/QRCodeCard/QRCodeCard';
 import { Screen } from '../../components/Screen/Screen';
 import { StatusBadge } from '../../components/StatusBadge/StatusBadge';
@@ -142,7 +144,8 @@ export function ScanResultScreen({ navigation, route }: Props) {
           )}
         </View>
 
-        <Text
+        <LinkableText
+          value={title}
           numberOfLines={2}
           style={[
             theme.typography.subtitle,
@@ -151,9 +154,8 @@ export function ScanResultScreen({ navigation, route }: Props) {
               textAlign: 'center',
               marginTop: 4,
             },
-          ]}>
-          {title}
-        </Text>
+          ]}
+        />
         {isStructured && record.price != null ? (
           <Text
             style={[
@@ -199,9 +201,9 @@ export function ScanResultScreen({ navigation, route }: Props) {
             <InfoRow
               icon="tag-outline"
               label={t('preview.name')}
-              value={record.englishName || '—'}
+              value={record.englishName || record.urduName || '—'}
             />
-            {record.urduName ? (
+            {record.urduName && record.englishName ? (
               <InfoRow
                 icon="translate"
                 label={t('preview.name')}
@@ -209,22 +211,35 @@ export function ScanResultScreen({ navigation, route }: Props) {
                 rtl
               />
             ) : null}
-            <InfoRow
-              icon="currency-usd"
-              label={t('preview.price')}
-              value={formatPrice(record.price, record.currency, i18n.language)}
-            />
-            <InfoRow
-              icon="calendar-plus"
-              label={t('preview.created')}
-              value={formatDisplayDate(record.createdDate, i18n.language)}
-            />
+            {record.price != null ? (
+              <InfoRow
+                icon="currency-usd"
+                label={t('preview.price')}
+                value={formatPrice(
+                  record.price,
+                  record.currency,
+                  i18n.language,
+                )}
+              />
+            ) : null}
+            {record.createdDate ? (
+              <InfoRow
+                icon="calendar-plus"
+                label={t('preview.created')}
+                value={formatDisplayDate(record.createdDate, i18n.language)}
+              />
+            ) : null}
             <InfoRow
               icon="calendar-end"
               label={t('preview.expiry')}
               value={formatDisplayDate(record.expiryDate, i18n.language)}
-              last
+              last={!record.fields || Object.keys(record.fields).length === 0}
             />
+            {record.fields && Object.keys(record.fields).length > 0 ? (
+              <View style={{ marginTop: 4, marginBottom: 8 }}>
+                <CustomFieldsList fields={record.fields} />
+              </View>
+            ) : null}
             <View style={styles.statusWrap}>
               <StatusBadge status={getCodeStatus(record.expiryDate)} />
             </View>
@@ -324,7 +339,8 @@ function InfoRow({
           ]}>
           {label}
         </Text>
-        <Text
+        <LinkableText
+          value={value}
           style={[
             theme.typography.bodyBold,
             {
@@ -333,9 +349,8 @@ function InfoRow({
               textAlign: rtl ? 'right' : 'left',
               writingDirection: rtl ? 'rtl' : 'ltr',
             },
-          ]}>
-          {value}
-        </Text>
+          ]}
+        />
       </View>
     </View>
   );

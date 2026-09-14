@@ -6,7 +6,6 @@ import { GenerateCodeForm } from '../../components/GenerateCodeForm/GenerateCode
 import { Screen } from '../../components/Screen/Screen';
 import { HomeStackParamList } from '../../navigation/navigationTypes';
 import { codeService } from '../../services/codeService';
-import { DEFAULT_CURRENCY } from '../../constants';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'GenerateQR'>;
 
@@ -22,10 +21,8 @@ export function GenerateQRScreen({ navigation }: Props) {
             const record = await codeService.generateQrCode({
               englishName: values.englishName ?? '',
               urduName: values.urduName,
-              price: Number(values.price),
-              currency: DEFAULT_CURRENCY,
-              createdDate: values.createdDate,
               expiryDate: values.expiryDate,
+              fields: values.customFields,
             });
             Alert.alert(t('common.success'), t('generate.successQr'));
             navigation.replace('QRPreview', { codeId: record.id });

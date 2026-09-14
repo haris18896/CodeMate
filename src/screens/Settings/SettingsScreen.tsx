@@ -7,6 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import MaterialDesignIcons from '@react-native-vector-icons/material-design-icons';
 import { AppCard } from '../../components/AppCard/AppCard';
@@ -14,12 +15,15 @@ import { AppInput } from '../../components/AppInput/AppInput';
 import { Screen } from '../../components/Screen/Screen';
 import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { APP_NAME, APP_TAGLINE } from '../../constants';
+import { SettingsStackParamList } from '../../navigation/navigationTypes';
 import { codeService } from '../../services/codeService';
 import { permissionService } from '../../services/permissionService';
 import { useAppContext, useAppTheme } from '../../store/AppContext';
 import { AppLanguage, ThemePreference } from '../../types/code';
 
-export function SettingsScreen() {
+type Props = NativeStackScreenProps<SettingsStackParamList, 'SettingsMain'>;
+
+export function SettingsScreen({ navigation }: Props) {
   const theme = useAppTheme();
   const { t } = useTranslation();
   const {
@@ -105,6 +109,14 @@ export function SettingsScreen() {
           value={nameDraft}
           onChangeText={setNameDraft}
           onBlur={() => void setDisplayName(nameDraft)}
+        />
+      </Section>
+
+      <Section title={t('settings.forms')}>
+        <SettingsRow
+          icon="clipboard-list-outline"
+          label={t('templates.title')}
+          onPress={() => navigation.navigate('FormTemplates')}
         />
       </Section>
 

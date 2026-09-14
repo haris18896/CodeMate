@@ -13,6 +13,8 @@ import { shareService } from '../../services/shareService';
 import { LoadingOverlay } from '../LoadingOverlay/LoadingOverlay';
 import { BarcodeCard } from '../BarcodeCard/BarcodeCard';
 import { QRCodeCard } from '../QRCodeCard/QRCodeCard';
+import { CustomFieldsList } from '../CustomFieldsList/CustomFieldsList';
+import { LinkableText } from '../LinkableText/LinkableText';
 
 type Props = {
   record: CodeRecord;
@@ -51,11 +53,7 @@ export function CodePreviewActions({ record, title }: Props) {
       const uri = await capture();
       await shareService.shareImage({
         uri,
-        message: `${record.englishName || 'CodeMate'} — ${formatPrice(
-          record.price,
-          record.currency,
-          i18n.language,
-        )}`,
+        message: record.englishName || record.urduName || 'CodeMate',
       });
     } catch {
       Alert.alert(t('common.error'), t('preview.unableShare'));
@@ -81,22 +79,39 @@ export function CodePreviewActions({ record, title }: Props) {
       )}
 
       <View style={{ marginTop: 16, gap: 8 }}>
-        <Meta label={t('preview.name')} value={record.englishName || '—'} />
-        {record.urduName ? (
-          <Meta label={t('preview.urduName')} value={record.urduName} rtl />
+        {record.englishName || record.urduName ? (
+          <>
+            <Meta
+              label={t('preview.name')}
+              value={record.englishName || record.urduName || '—'}
+            />
+            {record.urduName && record.englishName ? (
+              <Meta label={t('preview.name')} value={record.urduName} rtl />
+            ) : null}
+          </>
+        ) : (
+          <Meta
+            label={t('scanResult.rawValue')}
+            value={record.rawScannedValue || record.payload}
+          />
+        )}
+        {record.price != null ? (
+          <Meta
+            label={t('preview.price')}
+            value={formatPrice(record.price, record.currency, i18n.language)}
+          />
         ) : null}
-        <Meta
-          label={t('preview.price')}
-          value={formatPrice(record.price, record.currency, i18n.language)}
-        />
-        <Meta
-          label={t('preview.created')}
-          value={formatDisplayDate(record.createdDate, i18n.language)}
-        />
+        {record.createdDate ? (
+          <Meta
+            label={t('preview.created')}
+            value={formatDisplayDate(record.createdDate, i18n.language)}
+          />
+        ) : null}
         <Meta
           label={t('preview.expiry')}
           value={formatDisplayDate(record.expiryDate, i18n.language)}
         />
+        <CustomFieldsList fields={record.fields} />
         <StatusBadge status={getCodeStatus(record.expiryDate)} />
       </View>
 
@@ -139,7 +154,8 @@ function Meta({
       <Text style={[theme.typography.caption, { color: theme.colors.textSecondary }]}>
         {label}
       </Text>
-      <Text
+      <LinkableText
+        value={value}
         style={[
           theme.typography.bodyBold,
           {
@@ -148,9 +164,8 @@ function Meta({
             writingDirection: rtl ? 'rtl' : 'ltr',
             flex: 1,
           },
-        ]}>
-        {value}
-      </Text>
+        ]}
+      />
     </View>
   );
 }

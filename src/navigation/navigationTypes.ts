@@ -25,6 +25,8 @@ export type ScanStackParamList = {
 
 export type SettingsStackParamList = {
   SettingsMain: undefined;
+  FormTemplates: undefined;
+  EditFormTemplate: { templateId: string };
 };
 
 export type MainTabParamList = {

@@ -37,6 +37,7 @@ import {
   type Barcode,
 } from 'react-native-vision-camera-barcode-scanner';
 import { EmptyState } from '../../components/EmptyState/EmptyState';
+import { LinkableText } from '../../components/LinkableText/LinkableText';
 import { SCAN_FORMATS } from '../../constants';
 import { ScanStackParamList } from '../../navigation/navigationTypes';
 import { codeService } from '../../services/codeService';
@@ -358,9 +359,11 @@ export function ScannerScreen({ navigation }: Props) {
               </Text>
             </View>
 
-            <Text style={styles.detectedTitle} numberOfLines={2}>
-              {detectedTitle}
-            </Text>
+            <LinkableText
+              value={detectedTitle}
+              style={styles.detectedTitle}
+              numberOfLines={2}
+            />
 
             {detected.price != null ? (
               <InfoRow
@@ -384,7 +387,13 @@ export function ScannerScreen({ navigation }: Props) {
                 value={formatDisplayDate(detected.expiryDate, i18n.language)}
               />
             ) : null}
-            {!detected.englishName && !detected.urduName && !detected.price ? (
+            {Object.entries(detected.fields ?? {}).map(([label, value]) => (
+              <InfoRow key={label} label={label} value={String(value)} />
+            ))}
+            {!detected.englishName &&
+            !detected.urduName &&
+            !detected.price &&
+            !detected.fields ? (
               <InfoRow
                 label={t('scanResult.rawValue')}
                 value={detected.rawScannedValue || detected.payload}
@@ -444,9 +453,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.infoRow}>
       <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoValue} numberOfLines={2}>
-        {value}
-      </Text>
+      <LinkableText value={value} style={styles.infoValue} numberOfLines={2} />
     </View>
   );
 }

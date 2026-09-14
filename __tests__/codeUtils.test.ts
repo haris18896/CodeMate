@@ -5,7 +5,13 @@ import {
   parseScannedValue,
   stringifyQrPayload,
 } from '../src/utils/codePayload';
-import { getCodeStatus, isExpiryValid, toDateOnly } from '../src/utils/date';
+import {
+  defaultExpiryDate,
+  getCodeStatus,
+  isExpiryOnOrAfterToday,
+  isExpiryValid,
+  toDateOnly,
+} from '../src/utils/date';
 import { groupCodesByDay } from '../src/utils/groupCodesByDay';
 import { generateCodeSchema } from '../src/utils/validation';
 import { CodeRecord } from '../src/types/code';
@@ -15,21 +21,24 @@ describe('QR payload', () => {
     const payload = buildQrPayload('abc-123', {
       englishName: 'Sample Product',
       urduName: 'نمونہ پروڈکٹ',
-      price: 2500,
-      createdDate: '2026-09-12',
-      expiryDate: '2026-12-31',
+      expiryDate: '2028-09-12',
+      fields: { 'Batch No': 'B-1' },
     });
 
     expect(payload.app).toBe('CodeMate');
     expect(payload.name.en).toBe('Sample Product');
     expect(payload.name.ur).toBe('نمونہ پروڈکٹ');
+    expect(payload.expiryDate).toBe('2028-09-12');
+    expect(payload.fields).toEqual({ 'Batch No': 'B-1' });
+    expect(payload.price).toBeUndefined();
+    expect(payload.createdDate).toBeUndefined();
 
     const raw = stringifyQrPayload(payload);
     const parsed = parseScannedValue(raw);
     expect(parsed.kind).toBe('codemate-qr');
     if (parsed.kind === 'codemate-qr') {
       expect(parsed.payload.id).toBe('abc-123');
-      expect(parsed.payload.price).toBe(2500);
+      expect(parsed.payload.expiryDate).toBe('2028-09-12');
     }
   });
 
@@ -51,25 +60,23 @@ describe('Barcode payload', () => {
       {
         englishName: 'Sample Product',
         urduName: 'نمونہ پروڈکٹ',
-        price: 2500,
-        createdDate: '2026-09-12',
-        expiryDate: '2026-12-31',
+        expiryDate: '2028-12-31',
       },
     );
 
     expect(payload.startsWith('CM|')).toBe(true);
     expect(payload.includes('نمونہ')).toBe(false);
     expect(payload).toContain('N=Sample Product');
-    expect(payload).toContain('P=2500');
-    expect(payload).toContain('C=20260912');
-    expect(payload).toContain('E=20261231');
+    expect(payload).not.toContain('P=');
+    expect(payload).not.toContain('C=');
+    expect(payload).toContain('E=20281231');
     expect(payload).toContain('ID=');
 
     const fields = parseBarcodePayload(payload);
     expect(fields?.name).toBe('Sample Product');
-    expect(fields?.price).toBe(2500);
-    expect(fields?.createdDate).toBe('2026-09-12');
-    expect(fields?.expiryDate).toBe('2026-12-31');
+    expect(fields?.price).toBeUndefined();
+    expect(fields?.createdDate).toBeUndefined();
+    expect(fields?.expiryDate).toBe('2028-12-31');
   });
 
   it('parses scanned CodeMate barcodes', () => {
@@ -92,6 +99,19 @@ describe('expiration', () => {
     expect(isExpiryValid('2026-09-12', '2026-09-12')).toBe(true);
     expect(isExpiryValid('2026-09-12', '2026-09-11')).toBe(false);
   });
+
+  it('defaults expiry to two years from today', () => {
+    expect(defaultExpiryDate(new Date('2026-09-14'))).toBe('2028-09-14');
+  });
+
+  it('requires expiry on or after today', () => {
+    expect(
+      isExpiryOnOrAfterToday('2026-09-14', new Date('2026-09-14')),
+    ).toBe(true);
+    expect(
+      isExpiryOnOrAfterToday('2026-09-13', new Date('2026-09-14')),
+    ).toBe(false);
+  });
 });
 
 describe('validation', () => {
@@ -99,19 +119,17 @@ describe('validation', () => {
     const result = generateCodeSchema.safeParse({
       englishName: 'Sample',
       urduName: 'نمونہ',
-      price: 100,
-      createdDate: '2026-09-12',
-      expiryDate: '2026-12-31',
+      expiryDate: defaultExpiryDate(),
+      customFields: { 'Batch No': 'A1' },
     });
     expect(result.success).toBe(true);
   });
 
-  it('rejects invalid price and dates', () => {
+  it('rejects missing name and past expiry', () => {
     const result = generateCodeSchema.safeParse({
       englishName: '',
-      price: 0,
-      createdDate: '2026-09-12',
-      expiryDate: '2026-09-01',
+      expiryDate: '2020-01-01',
+      customFields: {},
     });
     expect(result.success).toBe(false);
   });
@@ -120,9 +138,8 @@ describe('validation', () => {
     const result = generateCodeSchema.safeParse({
       englishName: '',
       urduName: 'نمونہ',
-      price: 100,
-      createdDate: '2026-09-12',
-      expiryDate: '2026-12-31',
+      expiryDate: defaultExpiryDate(),
+      customFields: {},
     });
     expect(result.success).toBe(true);
   });

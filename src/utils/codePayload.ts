@@ -1,21 +1,38 @@
 import {
   APP_NAME,
   BARCODE_PREFIX,
-  DEFAULT_CURRENCY,
   QR_PAYLOAD_VERSION,
 } from '../constants';
 import {
   CodeMateBarcodeFields,
   CodeMateQrPayload,
+  CustomFieldValues,
   GenerateCodeInput,
   ScanParseResult,
 } from '../types/code';
 import { formatCompactDate } from './date';
 
+function cleanFields(
+  fields?: CustomFieldValues,
+): CustomFieldValues | undefined {
+  if (!fields) {
+    return undefined;
+  }
+  const cleaned: CustomFieldValues = {};
+  for (const [key, value] of Object.entries(fields)) {
+    const trimmed = String(value ?? '').trim();
+    if (trimmed) {
+      cleaned[key] = trimmed;
+    }
+  }
+  return Object.keys(cleaned).length ? cleaned : undefined;
+}
+
 export function buildQrPayload(
   id: string,
   input: GenerateCodeInput,
 ): CodeMateQrPayload {
+  const fields = cleanFields(input.fields);
   return {
     app: APP_NAME,
     version: QR_PAYLOAD_VERSION,
@@ -26,10 +43,8 @@ export function buildQrPayload(
         ? { ur: input.urduName.trim() }
         : {}),
     },
-    price: input.price,
-    currency: input.currency ?? DEFAULT_CURRENCY,
-    createdDate: input.createdDate,
     expiryDate: input.expiryDate,
+    ...(fields ? { fields } : {}),
   };
 }
 
@@ -42,18 +57,17 @@ export function buildBarcodePayload(
   input: GenerateCodeInput,
 ): string {
   const shortId = id.replace(/-/g, '').slice(0, 12).toUpperCase();
-  const asciiName = (input.englishName.trim() || input.urduName?.trim() || 'ITEM')
-    .replace(/[^\x20-\x7E]/g, '')
-    .slice(0, 40) || 'ITEM';
-  const parts = [
+  const asciiName =
+    (input.englishName.trim() || input.urduName?.trim() || 'ITEM')
+      .replace(/[^\x20-\x7E]/g, '')
+      .slice(0, 40) || 'ITEM';
+  // Barcode stays compact: name + expiry + id. Custom fields live in DB fields_json.
+  return [
     BARCODE_PREFIX,
     `N=${asciiName}`,
-    `P=${Math.round(input.price)}`,
-    `C=${formatCompactDate(input.createdDate)}`,
     `E=${formatCompactDate(input.expiryDate)}`,
     `ID=${shortId}`,
-  ];
-  return parts.join('|');
+  ].join('|');
 }
 
 export function parseBarcodePayload(raw: string): CodeMateBarcodeFields | null {
@@ -113,6 +127,7 @@ export function parseScannedValue(rawValue: string): ScanParseResult {
       parsed.name &&
       typeof parsed.name.en === 'string'
     ) {
+      const fields = cleanFields(parsed.fields);
       return {
         kind: 'codemate-qr',
         rawValue: trimmed,
@@ -124,10 +139,11 @@ export function parseScannedValue(rawValue: string): ScanParseResult {
             en: parsed.name.en,
             ur: parsed.name.ur,
           },
-          price: Number(parsed.price) || 0,
-          currency: parsed.currency || DEFAULT_CURRENCY,
-          createdDate: parsed.createdDate || '',
           expiryDate: parsed.expiryDate || '',
+          ...(fields ? { fields } : {}),
+          ...(parsed.price != null ? { price: Number(parsed.price) || 0 } : {}),
+          ...(parsed.currency ? { currency: parsed.currency } : {}),
+          ...(parsed.createdDate ? { createdDate: parsed.createdDate } : {}),
         },
       };
     }
@@ -148,9 +164,11 @@ export function parseScannedValue(rawValue: string): ScanParseResult {
 }
 
 export function sanitizeFilename(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 48) || 'code';
+  return (
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 48) || 'code'
+  );
 }

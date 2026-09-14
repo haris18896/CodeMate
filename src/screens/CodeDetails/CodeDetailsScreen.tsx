@@ -10,7 +10,9 @@ import { useTranslation } from 'react-i18next';
 import { AppButton } from '../../components/AppButton/AppButton';
 import { AppCard } from '../../components/AppCard/AppCard';
 import { BarcodeCard } from '../../components/BarcodeCard/BarcodeCard';
+import { CustomFieldsList } from '../../components/CustomFieldsList/CustomFieldsList';
 import { ExportableCodeCard } from '../../components/CodeCard/ExportableCodeCard';
+import { LinkableText } from '../../components/LinkableText/LinkableText';
 import { LoadingOverlay } from '../../components/LoadingOverlay/LoadingOverlay';
 import { QRCodeCard } from '../../components/QRCodeCard/QRCodeCard';
 import { Screen } from '../../components/Screen/Screen';
@@ -87,22 +89,39 @@ export function CodeDetailsScreen({ navigation, route }: Props) {
       </AppCard>
 
       <AppCard style={{ marginTop: 14, gap: 8 }}>
-        <Row label={t('preview.name')} value={record.englishName || '—'} />
-        {record.urduName ? (
-          <Row label={t('preview.urduName')} value={record.urduName} rtl />
+        {record.englishName || record.urduName ? (
+          <>
+            <Row
+              label={t('preview.name')}
+              value={record.englishName || record.urduName || '—'}
+            />
+            {record.urduName && record.englishName ? (
+              <Row label={t('preview.name')} value={record.urduName} rtl />
+            ) : null}
+          </>
+        ) : (
+          <Row
+            label={t('scanResult.rawValue')}
+            value={record.rawScannedValue || record.payload}
+          />
+        )}
+        {record.price != null ? (
+          <Row
+            label={t('preview.price')}
+            value={formatPrice(record.price, record.currency, i18n.language)}
+          />
         ) : null}
-        <Row
-          label={t('preview.price')}
-          value={formatPrice(record.price, record.currency, i18n.language)}
-        />
-        <Row
-          label={t('preview.created')}
-          value={formatDisplayDate(record.createdDate, i18n.language)}
-        />
+        {record.createdDate ? (
+          <Row
+            label={t('preview.created')}
+            value={formatDisplayDate(record.createdDate, i18n.language)}
+          />
+        ) : null}
         <Row
           label={t('preview.expiry')}
           value={formatDisplayDate(record.expiryDate, i18n.language)}
         />
+        <CustomFieldsList fields={record.fields} />
         <Row
           label={t('details.source')}
           value={
@@ -199,7 +218,8 @@ function Row({
       <Text style={[theme.typography.caption, { color: theme.colors.textSecondary }]}>
         {label}
       </Text>
-      <Text
+      <LinkableText
+        value={value}
         style={[
           theme.typography.bodyBold,
           {
@@ -207,9 +227,8 @@ function Row({
             textAlign: rtl ? 'right' : 'left',
             writingDirection: rtl ? 'rtl' : 'ltr',
           },
-        ]}>
-        {value}
-      </Text>
+        ]}
+      />
     </View>
   );
 }

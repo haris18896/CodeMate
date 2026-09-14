@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Platform, Pressable, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Alert, Platform, Pressable, Text, View } from 'react-native';
 import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
@@ -8,12 +8,18 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { AppButton } from '../AppButton/AppButton';
 import { AppInput } from '../AppInput/AppInput';
+import { formTemplateService } from '../../services/codeService';
+import { useAppContext, useAppTheme } from '../../store/AppContext';
+import {
+  CustomFieldValues,
+  FormTemplate,
+  FormTemplateField,
+} from '../../types/code';
 import {
   GenerateCodeFormValues,
   generateCodeSchema,
 } from '../../utils/validation';
-import { toDateOnly, parseDateOnly } from '../../utils/date';
-import { useAppContext } from '../../store/AppContext';
+import { defaultExpiryDate, parseDateOnly, toDateOnly } from '../../utils/date';
 
 type Props = {
   submitLabel: string;
@@ -22,12 +28,14 @@ type Props = {
 
 export function GenerateCodeForm({ submitLabel, onSubmit }: Props) {
   const { t } = useTranslation();
+  const theme = useAppTheme();
   const { language } = useAppContext();
   const isUrdu = language === 'ur';
   const [busy, setBusy] = useState(false);
-  const [pickerField, setPickerField] = useState<
-    'createdDate' | 'expiryDate' | null
-  >(null);
+  const [activeTemplate, setActiveTemplate] = useState<FormTemplate | null>(
+    null,
+  );
+  const [pickerField, setPickerField] = useState<string | null>(null);
 
   const {
     control,
@@ -36,49 +44,136 @@ export function GenerateCodeForm({ submitLabel, onSubmit }: Props) {
     watch,
     formState: { errors },
   } = useForm<GenerateCodeFormValues>({
-    // zodResolver typing is loose across zod v4 + RHF versions
     resolver: zodResolver(generateCodeSchema) as never,
     defaultValues: {
       englishName: '',
       urduName: '',
-      price: undefined as unknown as number,
-      createdDate: toDateOnly(),
-      expiryDate: toDateOnly(
-        new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
-      ),
+      expiryDate: defaultExpiryDate(),
+      customFields: {},
     },
   });
 
-  const createdDate = watch('createdDate');
   const expiryDate = watch('expiryDate');
+  const customFields = watch('customFields') ?? {};
+
+  useEffect(() => {
+    void (async () => {
+      const preferred = await formTemplateService.getDefaultTemplate();
+      if (preferred) {
+        setActiveTemplate(preferred);
+      }
+    })();
+  }, []);
 
   const onChangeDate = (event: DateTimePickerEvent, date?: Date) => {
+    const fieldKey = pickerField;
     if (Platform.OS === 'android') {
       setPickerField(null);
     }
-    if (event.type === 'dismissed' || !date || !pickerField) {
+    if (event.type === 'dismissed' || !date || !fieldKey) {
       return;
     }
-    setValue(pickerField, toDateOnly(date), { shouldValidate: true });
+    const value = toDateOnly(date);
+    if (fieldKey === 'expiryDate') {
+      setValue('expiryDate', value, { shouldValidate: true });
+      return;
+    }
+    setValue(
+      'customFields',
+      { ...customFields, [fieldKey]: value },
+      { shouldValidate: true },
+    );
+  };
+
+  const setCustomValue = (key: string, value: string) => {
+    setValue(
+      'customFields',
+      { ...customFields, [key]: value },
+      { shouldValidate: true },
+    );
   };
 
   const submit = handleSubmit(async (values: GenerateCodeFormValues) => {
+    const missing = (activeTemplate?.fields ?? []).filter(
+      field => field.required && !String(values.customFields?.[field.key] ?? '').trim(),
+    );
+    if (missing.length > 0) {
+      Alert.alert(
+        t('common.error'),
+        t('templates.requiredFieldsMissing', {
+          fields: missing.map(field => field.label).join(', '),
+        }),
+      );
+      return;
+    }
+
     try {
       setBusy(true);
       const englishName = isUrdu ? '' : values.englishName?.trim() || '';
       const urduName = isUrdu ? values.urduName?.trim() || '' : '';
+      const cleanedFields: CustomFieldValues = {};
+      for (const field of activeTemplate?.fields ?? []) {
+        const value = String(values.customFields?.[field.key] ?? '').trim();
+        if (value) {
+          cleanedFields[field.label] = value;
+        }
+      }
       await onSubmit({
-        ...values,
         englishName,
         urduName,
+        expiryDate: values.expiryDate,
+        customFields: cleanedFields,
       });
     } finally {
       setBusy(false);
     }
   });
 
+  const pickerValue = (() => {
+    if (!pickerField) {
+      return new Date();
+    }
+    if (pickerField === 'expiryDate') {
+      return parseDateOnly(expiryDate) || new Date();
+    }
+    return parseDateOnly(customFields[pickerField]) || new Date();
+  })();
+
   return (
     <View>
+      {activeTemplate ? (
+        <View style={{ marginBottom: 12 }}>
+          <Text
+            style={[
+              theme.typography.label,
+              { color: theme.colors.textSecondary, marginBottom: 8 },
+            ]}>
+            {t('templates.useTemplate')}
+          </Text>
+          <View
+            style={{
+              minHeight: 44,
+              borderRadius: 12,
+              borderWidth: 1.5,
+              borderColor: theme.colors.primary,
+              backgroundColor: theme.colors.primaryLight,
+              paddingHorizontal: 12,
+              justifyContent: 'center',
+            }}>
+            <Text
+              style={[
+                theme.typography.bodyBold,
+                { color: theme.colors.primaryDark },
+              ]}>
+              {activeTemplate.name}
+              {activeTemplate.isDefault
+                ? ` · ${t('templates.default')}`
+                : ''}
+            </Text>
+          </View>
+        </View>
+      ) : null}
+
       {isUrdu ? (
         <Controller
           control={control}
@@ -110,35 +205,16 @@ export function GenerateCodeForm({ submitLabel, onSubmit }: Props) {
           )}
         />
       )}
-      <Controller
-        control={control}
-        name="price"
-        render={({ field: { onChange, value } }) => (
-          <AppInput
-            label={`${t('generate.price')} (PKR) *`}
-            value={value != null && !Number.isNaN(value) ? String(value) : ''}
-            onChangeText={text => {
-              const cleaned = text.replace(/[^0-9.]/g, '');
-              onChange(cleaned);
-            }}
-            keyboardType="decimal-pad"
-            placeholder="2500"
-            error={errors.price?.message}
-          />
-        )}
-      />
 
-      <Pressable onPress={() => setPickerField('createdDate')}>
-        <View pointerEvents="none">
-          <AppInput
-            label={`${t('generate.createdDate')} *`}
-            value={createdDate}
-            editable={false}
-            rightIcon="calendar-outline"
-            error={errors.createdDate?.message}
-          />
-        </View>
-      </Pressable>
+      {(activeTemplate?.fields ?? []).map(field => (
+        <DynamicField
+          key={field.id}
+          field={field}
+          value={customFields[field.key] ?? ''}
+          onChangeText={text => setCustomValue(field.key, text)}
+          onOpenDate={() => setPickerField(field.key)}
+        />
+      ))}
 
       <Pressable onPress={() => setPickerField('expiryDate')}>
         <View pointerEvents="none">
@@ -154,12 +230,9 @@ export function GenerateCodeForm({ submitLabel, onSubmit }: Props) {
 
       {pickerField ? (
         <DateTimePicker
-          value={
-            parseDateOnly(
-              pickerField === 'createdDate' ? createdDate : expiryDate,
-            ) || new Date()
-          }
+          value={pickerValue}
           mode="date"
+          minimumDate={pickerField === 'expiryDate' ? new Date() : undefined}
           display={Platform.OS === 'ios' ? 'spinner' : 'default'}
           onChange={onChangeDate}
         />
@@ -173,5 +246,49 @@ export function GenerateCodeForm({ submitLabel, onSubmit }: Props) {
         style={{ marginTop: 8 }}
       />
     </View>
+  );
+}
+
+function DynamicField({
+  field,
+  value,
+  onChangeText,
+  onOpenDate,
+}: {
+  field: FormTemplateField;
+  value: string;
+  onChangeText: (text: string) => void;
+  onOpenDate: () => void;
+}) {
+  const label = `${field.label}${field.required ? ' *' : ''}`;
+
+  if (field.type === 'date') {
+    return (
+      <Pressable onPress={onOpenDate}>
+        <View pointerEvents="none">
+          <AppInput
+            label={label}
+            value={value}
+            editable={false}
+            rightIcon="calendar-outline"
+          />
+        </View>
+      </Pressable>
+    );
+  }
+
+  return (
+    <AppInput
+      label={label}
+      value={value}
+      onChangeText={text => {
+        if (field.type === 'number') {
+          onChangeText(text.replace(/[^0-9.]/g, ''));
+          return;
+        }
+        onChangeText(text);
+      }}
+      keyboardType={field.type === 'number' ? 'decimal-pad' : 'default'}
+    />
   );
 }
