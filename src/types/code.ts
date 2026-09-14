@@ -66,6 +66,7 @@ export interface CodeMateBarcodeFields {
   price?: number;
   createdDate?: string;
   expiryDate?: string;
+  fields?: CustomFieldValues;
 }
 
 export interface GenerateCodeInput {

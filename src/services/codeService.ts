@@ -80,9 +80,9 @@ export async function saveScannedValue(params: {
   }
 
   if (parsed.kind === 'codemate-barcode') {
-    const localMatch = await codeRepository.findCodeByBarcodeId(
-      parsed.fields.id,
-    );
+    const localMatch = parsed.fields.id
+      ? await codeRepository.findCodeByBarcodeId(parsed.fields.id)
+      : null;
     return codeRepository.createCode({
       id,
       type: 'BARCODE',
@@ -93,10 +93,32 @@ export async function saveScannedValue(params: {
       currency: localMatch?.currency ?? DEFAULT_CURRENCY,
       createdDate: localMatch?.createdDate ?? parsed.fields.createdDate,
       expiryDate: localMatch?.expiryDate ?? parsed.fields.expiryDate,
-      fields: localMatch?.fields,
+      fields: localMatch?.fields ?? parsed.fields.fields,
       payload: params.rawValue,
       rawScannedValue: params.rawValue,
     });
+  }
+
+  // Old shared labels sometimes only decoded the short ID under the bars.
+  const raw = params.rawValue.trim();
+  if (/^[A-F0-9]{10,16}$/i.test(raw)) {
+    const localMatch = await codeRepository.findCodeByBarcodeId(raw);
+    if (localMatch) {
+      return codeRepository.createCode({
+        id,
+        type: 'BARCODE',
+        source: 'SCANNED',
+        englishName: localMatch.englishName,
+        urduName: localMatch.urduName,
+        price: localMatch.price,
+        currency: localMatch.currency ?? DEFAULT_CURRENCY,
+        createdDate: localMatch.createdDate,
+        expiryDate: localMatch.expiryDate,
+        fields: localMatch.fields,
+        payload: localMatch.payload,
+        rawScannedValue: params.rawValue,
+      });
+    }
   }
 
   return codeRepository.createCode({

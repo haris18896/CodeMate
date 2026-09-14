@@ -19,9 +19,4 @@ export const STORAGE_KEYS = {
 export const SCAN_FORMATS = [
   'qr-code',
   'code-128',
-  'code-39',
-  'ean-13',
-  'ean-8',
-  'upc-a',
-  'upc-e',
 ] as const;

@@ -24,13 +24,21 @@ import { defaultExpiryDate, parseDateOnly, toDateOnly } from '../../utils/date';
 type Props = {
   submitLabel: string;
   onSubmit: (values: GenerateCodeFormValues) => Promise<void>;
+  /** CODE128 cannot store Urdu — collect an English/ASCII name too. */
+  requireEnglishName?: boolean;
 };
 
-export function GenerateCodeForm({ submitLabel, onSubmit }: Props) {
+export function GenerateCodeForm({
+  submitLabel,
+  onSubmit,
+  requireEnglishName = false,
+}: Props) {
   const { t } = useTranslation();
   const theme = useAppTheme();
   const { language } = useAppContext();
   const isUrdu = language === 'ur';
+  const showEnglishName = !isUrdu || requireEnglishName;
+  const showUrduName = isUrdu;
   const [busy, setBusy] = useState(false);
   const [activeTemplate, setActiveTemplate] = useState<FormTemplate | null>(
     null,
@@ -109,8 +117,10 @@ export function GenerateCodeForm({ submitLabel, onSubmit }: Props) {
 
     try {
       setBusy(true);
-      const englishName = isUrdu ? '' : values.englishName?.trim() || '';
-      const urduName = isUrdu ? values.urduName?.trim() || '' : '';
+      const englishName = showEnglishName
+        ? values.englishName?.trim() || ''
+        : '';
+      const urduName = showUrduName ? values.urduName?.trim() || '' : '';
       const cleanedFields: CustomFieldValues = {};
       for (const field of activeTemplate?.fields ?? []) {
         const value = String(values.customFields?.[field.key] ?? '').trim();
@@ -118,6 +128,14 @@ export function GenerateCodeForm({ submitLabel, onSubmit }: Props) {
           cleanedFields[field.label] = value;
         }
       }
+      if (requireEnglishName && !englishName) {
+        Alert.alert(
+          t('common.error'),
+          t('generate.barcodeNeedsEnglishBody'),
+        );
+        return;
+      }
+
       await onSubmit({
         englishName,
         urduName,
@@ -174,28 +192,13 @@ export function GenerateCodeForm({ submitLabel, onSubmit }: Props) {
         </View>
       ) : null}
 
-      {isUrdu ? (
-        <Controller
-          control={control}
-          name="urduName"
-          render={({ field: { onChange, value } }) => (
-            <AppInput
-              label={`${t('generate.name')} *`}
-              value={value ?? ''}
-              onChangeText={onChange}
-              placeholder="نمونہ پروڈکٹ"
-              isRTL
-              error={errors.urduName?.message}
-            />
-          )}
-        />
-      ) : (
+      {showEnglishName ? (
         <Controller
           control={control}
           name="englishName"
           render={({ field: { onChange, value } }) => (
             <AppInput
-              label={`${t('generate.name')} *`}
+              label={`${t('generate.englishName')} *`}
               value={value ?? ''}
               onChangeText={onChange}
               placeholder="Sample Product"
@@ -204,7 +207,34 @@ export function GenerateCodeForm({ submitLabel, onSubmit }: Props) {
             />
           )}
         />
-      )}
+      ) : null}
+
+      {showUrduName ? (
+        <Controller
+          control={control}
+          name="urduName"
+          render={({ field: { onChange, value } }) => (
+            <AppInput
+              label={`${t('generate.name')}${requireEnglishName ? '' : ' *'}`}
+              value={value ?? ''}
+              onChangeText={onChange}
+              placeholder="نمونہ پروڈکٹ"
+              isRTL
+              error={errors.urduName?.message}
+            />
+          )}
+        />
+      ) : null}
+
+      {requireEnglishName ? (
+        <Text
+          style={[
+            theme.typography.caption,
+            { color: theme.colors.textSecondary, marginBottom: 12 },
+          ]}>
+          {t('generate.barcodeAsciiHint')}
+        </Text>
+      ) : null}
 
       {(activeTemplate?.fields ?? []).map(field => (
         <DynamicField

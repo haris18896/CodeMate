@@ -17,7 +17,7 @@ import { generateCodeSchema } from '../src/utils/validation';
 import { CodeRecord } from '../src/types/code';
 
 describe('QR payload', () => {
-  it('builds and stringifies structured JSON', () => {
+  it('builds compact UTF-8 JSON with the real product information', () => {
     const payload = buildQrPayload('abc-123', {
       englishName: 'Sample Product',
       urduName: 'نمونہ پروڈکٹ',
@@ -30,15 +30,46 @@ describe('QR payload', () => {
     expect(payload.name.ur).toBe('نمونہ پروڈکٹ');
     expect(payload.expiryDate).toBe('2028-09-12');
     expect(payload.fields).toEqual({ 'Batch No': 'B-1' });
-    expect(payload.price).toBeUndefined();
-    expect(payload.createdDate).toBeUndefined();
 
     const raw = stringifyQrPayload(payload);
+    expect(raw).toBe(
+      '{"name":"نمونہ پروڈکٹ","expiry":"12-09-2028","fields":{"Batch No":"B-1"}}',
+    );
+
     const parsed = parseScannedValue(raw);
     expect(parsed.kind).toBe('codemate-qr');
     if (parsed.kind === 'codemate-qr') {
-      expect(parsed.payload.id).toBe('abc-123');
+      expect(parsed.payload.id).toBe('');
+      expect(parsed.payload.name.en).toBe('');
+      expect(parsed.payload.name.ur).toBe('نمونہ پروڈکٹ');
       expect(parsed.payload.expiryDate).toBe('2028-09-12');
+      expect(parsed.payload.fields).toEqual({ 'Batch No': 'B-1' });
+    }
+  });
+
+  it('still parses legacy JSON QR payloads', () => {
+    const legacy = JSON.stringify({
+      app: 'CodeMate',
+      version: 1,
+      id: 'legacy-1',
+      name: { en: 'Old Format' },
+      expiryDate: '2028-01-01',
+    });
+    const parsed = parseScannedValue(legacy);
+    expect(parsed.kind).toBe('codemate-qr');
+    if (parsed.kind === 'codemate-qr') {
+      expect(parsed.payload.name.en).toBe('Old Format');
+    }
+  });
+
+  it('parses QR JSON produced outside CodeMate', () => {
+    const parsed = parseScannedValue(
+      '{"name":"مٹی سونپ","expiry":"14-09-2026"}',
+    );
+    expect(parsed.kind).toBe('codemate-qr');
+    if (parsed.kind === 'codemate-qr') {
+      expect(parsed.payload.name.ur).toBe('مٹی سونپ');
+      expect(parsed.payload.expiryDate).toBe('2026-09-14');
     }
   });
 
@@ -54,34 +85,59 @@ describe('QR payload', () => {
 });
 
 describe('Barcode payload', () => {
-  it('builds ASCII-compatible CODE128 payload without Urdu', () => {
+  it('builds short scannable ASCII Name|Expiry text', () => {
     const payload = buildBarcodePayload(
       'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
       {
         englishName: 'Sample Product',
         urduName: 'نمونہ پروڈکٹ',
         expiryDate: '2028-12-31',
+        fields: { Batch: 'B-9' },
       },
     );
 
-    expect(payload.startsWith('CM|')).toBe(true);
+    expect(payload).toBe('Sample Product|31-12-2028');
     expect(payload.includes('نمونہ')).toBe(false);
-    expect(payload).toContain('N=Sample Product');
-    expect(payload).not.toContain('P=');
-    expect(payload).not.toContain('C=');
-    expect(payload).toContain('E=20281231');
-    expect(payload).toContain('ID=');
+    expect(payload.length).toBeLessThan(40);
 
     const fields = parseBarcodePayload(payload);
     expect(fields?.name).toBe('Sample Product');
-    expect(fields?.price).toBeUndefined();
-    expect(fields?.createdDate).toBeUndefined();
     expect(fields?.expiryDate).toBe('2028-12-31');
   });
 
+  it('rejects Urdu-only names for barcodes', () => {
+    expect(() =>
+      buildBarcodePayload('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee', {
+        englishName: '',
+        urduName: 'مٹی سونپ',
+        expiryDate: '2026-09-14',
+      }),
+    ).toThrow('BARCODE_NEEDS_ASCII_NAME');
+  });
+
   it('parses scanned CodeMate barcodes', () => {
+    const parsed = parseScannedValue('Tea|31-12-2026');
+    expect(parsed.kind).toBe('codemate-barcode');
+    if (parsed.kind === 'codemate-barcode') {
+      expect(parsed.fields.name).toBe('Tea');
+      expect(parsed.fields.expiryDate).toBe('2026-12-31');
+    }
+  });
+
+  it('still parses legacy CM| barcodes', () => {
     const parsed = parseScannedValue(
       'CM|N=Tea|P=100|C=20260101|E=20261231|ID=ABC123DEF456',
+    );
+    expect(parsed.kind).toBe('codemate-barcode');
+    if (parsed.kind === 'codemate-barcode') {
+      expect(parsed.fields.name).toBe('Tea');
+      expect(parsed.fields.expiryDate).toBe('2026-12-31');
+    }
+  });
+
+  it('still parses labeled human barcodes', () => {
+    const parsed = parseScannedValue(
+      'Name: Tea | Exp: 2026-12-31 | ID: ABC123DEF456',
     );
     expect(parsed.kind).toBe('codemate-barcode');
   });

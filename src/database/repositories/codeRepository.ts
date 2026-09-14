@@ -122,10 +122,18 @@ export async function findCodeByBarcodeId(
          id LIKE ?
          OR REPLACE(id, '-', '') LIKE ?
          OR payload LIKE ?
+         OR payload LIKE ?
+         OR payload LIKE ?
        )
      ORDER BY created_at DESC
      LIMIT 1`,
-    [`${barcodeId}%`, `${barcodeId}%`, `%ID=${barcodeId}%`],
+    [
+      `${barcodeId}%`,
+      `${barcodeId}%`,
+      `%ID=${barcodeId}%`,
+      `%ID: ${barcodeId}%`,
+      `%ID:${barcodeId}%`,
+    ],
   );
   const row = result.rows?.[0] as CodeRow | undefined;
   return row ? mapRow(row) : null;

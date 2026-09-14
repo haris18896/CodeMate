@@ -77,6 +77,10 @@ export const en = {
     generateBarcodeCta: 'Generate Barcode',
     successQr: 'QR code generated successfully.',
     successBarcode: 'Barcode generated successfully.',
+    barcodeAsciiHint:
+      'Barcodes can only store English/ASCII text. Use a QR code to include Urdu in the scan result.',
+    barcodeNeedsEnglishBody:
+      'Add an English name for barcodes. Urdu-only names need a QR code so other phones can read them.',
   },
   preview: {
     qrTitle: 'Your QR Code',
@@ -111,7 +115,7 @@ export const en = {
     productInformation: 'Product Information',
     scannedCode: 'Scanned Code',
     type: 'Type',
-    rawValue: 'Raw Value',
+    rawValue: 'Code text',
     copied: 'Value copied.',
     savedHint: 'This code has been saved to your history.',
   },

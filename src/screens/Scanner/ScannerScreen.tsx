@@ -69,6 +69,7 @@ export function ScannerScreen({ navigation }: Props) {
   const [detected, setDetected] = useState<CodeRecord | null>(null);
   const [layout, setLayout] = useState({ width: 0, height: 0 });
   const lockRef = useRef(false);
+  const candidateRef = useRef({ key: '', sightings: 0 });
 
   const scanLine = useSharedValue(0);
 
@@ -120,6 +121,7 @@ export function ScannerScreen({ navigation }: Props) {
   const resetScan = useCallback(() => {
     setDetected(null);
     lockRef.current = false;
+    candidateRef.current = { key: '', sightings: 0 };
   }, []);
 
   useEffect(() => {
@@ -138,6 +140,14 @@ export function ScannerScreen({ navigation }: Props) {
     if (!value) {
       return;
     }
+    const key = `${first.format}:${value}`;
+    candidateRef.current =
+      candidateRef.current.key === key
+        ? { key, sightings: candidateRef.current.sightings + 1 }
+        : { key, sightings: 1 };
+    if (candidateRef.current.sightings < 2) {
+      return;
+    }
     lockRef.current = true;
     try {
       const record = await codeService.saveScannedValue({
@@ -153,6 +163,7 @@ export function ScannerScreen({ navigation }: Props) {
 
   const barcodeOutput = useBarcodeScannerOutput({
     barcodeFormats: [...SCAN_FORMATS],
+    outputResolution: 'full',
     onBarcodeScanned: barcodes => {
       void handleBarcodes(barcodes);
     },

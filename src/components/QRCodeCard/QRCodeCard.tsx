@@ -22,8 +22,9 @@ export function QRCodeCard({ value, size = 220 }: Props) {
       <QRCode
         value={value || 'CodeMate'}
         size={size}
+        quietZone={16}
         backgroundColor="#FFFFFF"
-        color="#111827"
+        color="#000000"
         ecl="M"
       />
     </View>

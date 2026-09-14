@@ -16,6 +16,7 @@ export function GenerateBarcodeScreen({ navigation }: Props) {
     <Screen scroll edges={['left', 'right', 'bottom']}>
       <GenerateCodeForm
         submitLabel={t('generate.generateBarcodeCta')}
+        requireEnglishName
         onSubmit={async values => {
           try {
             const record = await codeService.generateBarcode({
@@ -26,8 +27,12 @@ export function GenerateBarcodeScreen({ navigation }: Props) {
             });
             Alert.alert(t('common.success'), t('generate.successBarcode'));
             navigation.replace('BarcodePreview', { codeId: record.id });
-          } catch {
-            Alert.alert(t('common.error'), t('common.error'));
+          } catch (error) {
+            const message =
+              error instanceof Error && error.message === 'BARCODE_NEEDS_ASCII_NAME'
+                ? t('generate.barcodeNeedsEnglishBody')
+                : t('common.error');
+            Alert.alert(t('common.error'), message);
           }
         }}
       />

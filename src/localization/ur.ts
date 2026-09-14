@@ -77,6 +77,10 @@ export const ur = {
     generateBarcodeCta: 'بارکوڈ بنائیں',
     successQr: 'کیو آر کوڈ کامیابی سے بن گیا۔',
     successBarcode: 'بارکوڈ کامیابی سے بن گیا۔',
+    barcodeAsciiHint:
+      'بارکوڈ صرف انگریزی/ASCII متن رکھ سکتا ہے۔ اردو کے لیے کیو آر کوڈ استعمال کریں۔',
+    barcodeNeedsEnglishBody:
+      'بارکوڈ کے لیے انگریزی نام لکھیں۔ صرف اردو نام کے لیے کیو آر کوڈ استعمال کریں تاکہ دوسرے فون پڑھ سکیں۔',
   },
   preview: {
     qrTitle: 'آپ کا کیو آر کوڈ',
@@ -111,7 +115,7 @@ export const ur = {
     productInformation: 'مصنوعات کی معلومات',
     scannedCode: 'اسکین شدہ کوڈ',
     type: 'قسم',
-    rawValue: 'اصل ویلیو',
+    rawValue: 'کوڈ متن',
     copied: 'ویلیو کاپی ہو گئی۔',
     savedHint: 'یہ کوڈ آپ کی ہسٹری میں محفوظ ہو گیا ہے۔',
   },
